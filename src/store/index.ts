@@ -20,6 +20,10 @@ interface AppState {
     addDebt: (d: Omit<Debt, 'id'>) => Promise<void>;
     toggleDebtStatus: (id: number, currentStatus: number) => Promise<void>;
     deleteDebt: (id: number) => Promise<void>;
+    updateDebt: (debt: Debt) => Promise<void>;
+
+    dailySpending: { date: string; total: number }[];
+    updateTransaction: (t: Transaction) => Promise<void>;
 
     refreshDashboard: () => Promise<void>;
 }
@@ -28,6 +32,7 @@ export const useStore = create<AppState>((set, get) => ({
     transactions: [],
     installments: [],
     debts: [],
+    dailySpending: [],
     kpi: { totalIncome: 0, totalExpense: 0 },
     loading: false,
 
@@ -83,9 +88,20 @@ export const useStore = create<AppState>((set, get) => ({
         await get().fetchDebts();
     },
 
+    updateDebt: async (d) => {
+        await Repository.updateDebt(d);
+        await get().fetchDebts();
+    },
+
+    updateTransaction: async (t) => {
+        await Repository.updateTransaction(t);
+        get().refreshDashboard();
+    },
+
     refreshDashboard: async () => {
         await get().fetchTransactions();
         const kpi = await Repository.getKpiSummary();
-        set({ kpi });
+        const dailySpending = await Repository.getDailySpending();
+        set({ kpi, dailySpending });
     }
 }));

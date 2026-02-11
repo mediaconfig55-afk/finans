@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { List, Text, useTheme, Divider, Searchbar, Chip } from 'react-native-paper';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
@@ -7,6 +8,7 @@ import { Transaction } from '../types';
 
 export const TransactionsScreen = () => {
     const theme = useTheme();
+    const navigation = useNavigation();
     const { transactions, fetchTransactions } = useStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -26,10 +28,11 @@ export const TransactionsScreen = () => {
         <List.Item
             title={item.category}
             description={item.description || formatShortDate(item.date)}
-            left={props => <List.Icon {...props} icon={item.type === 'income' ? 'arrow-up' : 'arrow-down'} color={item.type === 'income' ? theme.colors.customIncome : theme.colors.customExpense} />}
+            onPress={() => (navigation as any).navigate('TransactionDetail', { transaction: item })}
+            left={props => <List.Icon {...props} icon={item.type === 'income' ? 'arrow-up' : 'arrow-down'} color={item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense} />}
             right={() =>
                 <View style={{ justifyContent: 'center', alignItems: 'flex-end' }}>
-                    <Text style={{ color: item.type === 'income' ? theme.colors.customIncome : theme.colors.customExpense, fontWeight: 'bold' }}>
+                    <Text style={{ color: item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold' }}>
                         {item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}
                     </Text>
                     <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>

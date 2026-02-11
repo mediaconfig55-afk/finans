@@ -17,7 +17,7 @@ export const DebtsScreen = () => {
 
     const renderItem = ({ item }: { item: Debt }) => {
         const isPaid = item.isPaid === 1;
-        const color = item.type === 'receivable' ? theme.colors.customIncome : theme.colors.customExpense;
+        const color = item.type === 'receivable' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense;
 
         return (
             <List.Item

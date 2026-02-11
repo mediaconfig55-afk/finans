@@ -18,7 +18,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
-        <NavigationContainer theme={theme}>
+        <NavigationContainer theme={theme as any}>
           <Navigation />
         </NavigationContainer>
       </PaperProvider>

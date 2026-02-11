@@ -1,28 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, SegmentedButtons, HelperText, useTheme, Switch, Text } from 'react-native-paper';
+import { TextInput, Button, SegmentedButtons, HelperText, useTheme, Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
+import { Transaction } from '../types';
 
 const schema = z.object({
     amount: z.string().min(1, 'Tutar gereklidir').transform((val) => parseFloat(val.replace(',', '.'))).refine((val) => !isNaN(val) && val > 0, 'Geçerli bir tutar giriniz'),
     description: z.string().optional(),
     category: z.string().min(1, 'Kategori seçiniz'),
-    isInstallment: z.boolean().optional(),
-    installmentCount: z.string().optional().transform((val) => val ? parseInt(val) : 0),
-}).refine((data) => {
-    if (data.isInstallment && (!data.installmentCount || data.installmentCount < 2)) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Taksit sayısı en az 2 olmalıdır",
-    path: ["installmentCount"]
 });
 
 type FormData = z.infer<typeof schema>;
@@ -32,67 +23,94 @@ const CATEGORIES = {
     expense: ['Gıda', 'Ulaşım', 'Fatura', 'Eğlence', 'Kira', 'Sağlık', 'Giyim', 'Teknoloji', 'Diğer'],
 };
 
-export const AddTransactionScreen = () => {
+export const TransactionDetailScreen = () => {
     const theme = useTheme();
     const navigation = useNavigation();
-    const { addTransaction, addInstallment } = useStore();
+    const route = useRoute();
+    const { updateTransaction, deleteTransaction } = useStore();
+    const { transaction } = route.params as { transaction: Transaction };
 
-    const [type, setType] = useState<'income' | 'expense'>('expense');
-    const [date, setDate] = useState(new Date());
+    const [isEditing, setIsEditing] = useState(false);
+    const [type, setType] = useState<'income' | 'expense'>(transaction.type);
+    const [date, setDate] = useState(new Date(transaction.date));
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<any>({
+    const { control, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<any>({
         resolver: zodResolver(schema),
         defaultValues: {
-            amount: '',
-            description: '',
-            category: '',
-            isInstallment: false,
-            installmentCount: '',
+            amount: transaction.amount.toString(),
+            description: transaction.description || '',
+            category: transaction.category,
         }
     });
 
-    const isInstallment = watch('isInstallment');
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                !isEditing ? (
+                    <Button onPress={() => setIsEditing(true)}>Düzenle</Button>
+                ) : null
+            ),
+            title: isEditing ? 'İşlemi Düzenle' : 'İşlem Detayı'
+        });
+    }, [navigation, isEditing]);
 
     const onSubmit = async (data: any) => {
         try {
-            if (type === 'expense' && data.isInstallment && data.installmentCount) {
-                // Handle Installment
-                const monthlyAmount = data.amount / data.installmentCount;
-
-                await addInstallment({
-                    totalAmount: data.amount,
-                    totalMonths: data.installmentCount,
-                    remainingMonths: data.installmentCount,
-                    startDate: date.toISOString(),
-                    description: data.description || `${data.category} Taksiti`,
-                });
-
-                // Add first month transaction immediately
-                await addTransaction({
-                    type: 'expense',
-                    amount: monthlyAmount,
-                    category: data.category,
-                    date: date.toISOString(),
-                    description: `${data.description || 'Taksit'} (1/${data.installmentCount})`,
-                });
-
-            } else {
-                // Normal Transaction
-                await addTransaction({
-                    type,
-                    amount: data.amount,
-                    category: data.category,
-                    date: date.toISOString(),
-                    description: data.description,
-                });
-            }
+            await updateTransaction({
+                ...transaction,
+                type,
+                amount: parseFloat(data.amount), // Ensure amount is number if not already processed by zod
+                category: data.category,
+                date: date.toISOString(),
+                description: data.description,
+            });
+            Alert.alert('Başarılı', 'İşlem güncellendi');
+            setIsEditing(false);
             navigation.goBack();
         } catch (error) {
             console.error(error);
-            Alert.alert('Hata', 'İşlem kaydedilirken bir hata oluştu');
+            Alert.alert('Hata', 'Güncelleme sırasında bir hata oluştu');
         }
     };
+
+    const handleDelete = () => {
+        Alert.alert(
+            'Sil',
+            'Bu işlemi silmek istediğinizden emin misiniz?',
+            [
+                { text: 'Vazgeç', style: 'cancel' },
+                {
+                    text: 'Sil',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await deleteTransaction(transaction.id);
+                        navigation.goBack();
+                    }
+                }
+            ]
+        );
+    };
+
+    if (!isEditing) {
+        return (
+            <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+                    <Text variant="headlineMedium" style={{ color: type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold', marginBottom: 8 }}>
+                        {type === 'income' ? '+' : '-'}{transaction.amount} ₺
+                    </Text>
+                    <Text variant="titleMedium" style={{ marginBottom: 4 }}>{transaction.category}</Text>
+                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}>{formatShortDate(transaction.date)}</Text>
+
+                    <Text variant="bodyLarge">{transaction.description || 'Açıklama yok'}</Text>
+                </View>
+
+                <Button mode="contained-tonal" icon="delete" onPress={handleDelete} style={{ marginTop: 24 }} textColor={theme.colors.error}>
+                    İşlemi Sil
+                </Button>
+            </ScrollView>
+        );
+    }
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
@@ -100,17 +118,10 @@ export const AddTransactionScreen = () => {
 
                 <SegmentedButtons
                     value={type}
-                    onValueChange={(val: string) => {
-                        if (val === 'debt') {
-                            navigation.navigate('AddDebt' as never);
-                        } else {
-                            setType(val as any);
-                        }
-                    }}
+                    onValueChange={val => setType(val as any)}
                     buttons={[
                         { value: 'income', label: 'Gelir', style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
                         { value: 'expense', label: 'Gider', style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
-                        { value: 'debt', label: 'Borç', style: { backgroundColor: theme.colors.surfaceVariant } },
                     ]}
                     style={styles.input}
                 />
@@ -136,42 +147,6 @@ export const AddTransactionScreen = () => {
                         </>
                     )}
                 />
-
-                {type === 'expense' && (
-                    <Controller
-                        control={control}
-                        name="isInstallment"
-                        render={({ field: { onChange, value } }) => (
-                            <View style={styles.switchContainer}>
-                                <Text variant="bodyLarge">Taksitli İşlem</Text>
-                                <Switch value={value} onValueChange={onChange} color={theme.colors.primary} />
-                            </View>
-                        )}
-                    />
-                )}
-
-                {isInstallment && type === 'expense' && (
-                    <Controller
-                        control={control}
-                        name="installmentCount"
-                        render={({ field: { onChange, value } }) => (
-                            <>
-                                <TextInput
-                                    label="Taksit Sayısı"
-                                    value={value?.toString()}
-                                    onChangeText={onChange}
-                                    keyboardType="number-pad"
-                                    mode="outlined"
-                                    style={styles.input}
-                                    error={!!errors.installmentCount}
-                                />
-                                <HelperText type="error" visible={!!errors.installmentCount}>
-                                    {errors.installmentCount?.message as string}
-                                </HelperText>
-                            </>
-                        )}
-                    />
-                )}
 
                 <Controller
                     control={control}
@@ -212,7 +187,7 @@ export const AddTransactionScreen = () => {
                         value={date}
                         mode="date"
                         display="default"
-                        onChange={(event: any, selectedDate?: Date) => {
+                        onChange={(event, selectedDate) => {
                             setShowDatePicker(false);
                             if (selectedDate) setDate(selectedDate);
                         }}
@@ -224,7 +199,7 @@ export const AddTransactionScreen = () => {
                     name="description"
                     render={({ field: { onChange, value } }) => (
                         <TextInput
-                            label="Açıklama (Opsiyonel)"
+                            label="Açıklama"
                             value={value}
                             onChangeText={onChange}
                             mode="outlined"
@@ -233,14 +208,14 @@ export const AddTransactionScreen = () => {
                     )}
                 />
 
-                <Button
-                    mode="contained"
-                    onPress={handleSubmit(onSubmit)}
-                    loading={isSubmitting}
-                    style={styles.button}
-                >
-                    Kaydet
-                </Button>
+                <View style={styles.buttonRow}>
+                    <Button mode="outlined" onPress={() => setIsEditing(false)} style={{ flex: 1, marginRight: 8 }}>
+                        İptal
+                    </Button>
+                    <Button mode="contained" onPress={handleSubmit(onSubmit)} loading={isSubmitting} style={{ flex: 1 }}>
+                        Kaydet
+                    </Button>
+                </View>
 
             </ScrollView>
         </KeyboardAvoidingView>
@@ -252,15 +227,13 @@ const styles = StyleSheet.create({
         padding: 16,
         flexGrow: 1,
     },
+    card: {
+        padding: 24,
+        borderRadius: 16,
+        alignItems: 'center',
+    },
     input: {
         marginBottom: 8,
-    },
-    switchContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-        paddingHorizontal: 4,
     },
     categoryContainer: {
         paddingVertical: 8,
@@ -269,8 +242,8 @@ const styles = StyleSheet.create({
     categoryButton: {
         marginRight: 8,
     },
-    button: {
+    buttonRow: {
+        flexDirection: 'row',
         marginTop: 20,
-        paddingVertical: 6,
     }
 });

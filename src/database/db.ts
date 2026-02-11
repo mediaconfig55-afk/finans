@@ -1,11 +1,18 @@
 import * as SQLite from 'expo-sqlite';
 
-const dbPromise = SQLite.openDatabaseAsync('finansdb.db');
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+
+const getDBPromise = () => {
+  if (!dbPromise) {
+    dbPromise = SQLite.openDatabaseAsync('finansdb.db');
+  }
+  return dbPromise;
+};
 
 export const initDatabase = async () => {
-    const db = await dbPromise;
-    try {
-        await db.execAsync(`
+  const db = await getDBPromise();
+  try {
+    await db.execAsync(`
       PRAGMA foreign_keys = ON;
 
       CREATE TABLE IF NOT EXISTS installments (
@@ -38,10 +45,10 @@ export const initDatabase = async () => {
         description TEXT
       );
     `);
-        console.log('Database initialized successfully');
-    } catch (error) {
-        console.error('Error initializing database:', error);
-    }
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+  }
 };
 
-export const getDB = () => dbPromise;
+export const getDB = () => getDBPromise();

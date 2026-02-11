@@ -9,7 +9,7 @@ import { formatCurrency, formatShortDate } from '../utils/format';
 export const DashboardScreen = () => {
     const theme = useTheme();
     const navigation = useNavigation();
-    const { kpi, transactions, refreshDashboard, loading } = useStore();
+    const { kpi, transactions, refreshDashboard, loading, dailySpending } = useStore();
 
     useFocusEffect(
         useCallback(() => {
@@ -18,6 +18,10 @@ export const DashboardScreen = () => {
     );
 
     const balance = kpi.totalIncome - kpi.totalExpense;
+
+    // Calculate today's spending
+    const today = new Date().toISOString().split('T')[0];
+    const todaysSpending = dailySpending.find(d => d.date === today)?.total || 0;
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -59,6 +63,16 @@ export const DashboardScreen = () => {
                     />
                 </View>
 
+                {/* Daily Spending Widget */}
+                <View style={styles.summaryRow}>
+                    <SummaryCard
+                        title="Bugünkü Harcama"
+                        amount={todaysSpending}
+                        type="expense"
+                        icon="calendar-today"
+                    />
+                </View>
+
                 {/* Recent Transactions */}
                 <View style={styles.sectionHeader}>
                     <Text variant="titleLarge">Son İşlemler</Text>
@@ -77,8 +91,9 @@ export const DashboardScreen = () => {
                             <List.Item
                                 title={item.category}
                                 description={item.description || formatShortDate(item.date)}
-                                left={props => <List.Icon {...props} icon={item.type === 'income' ? 'arrow-up' : 'arrow-down'} color={item.type === 'income' ? theme.colors.customIncome : theme.colors.customExpense} />}
-                                right={() => <Text style={{ alignSelf: 'center', color: item.type === 'income' ? theme.colors.customIncome : theme.colors.customExpense, fontWeight: 'bold' }}>{item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}</Text>}
+                                onPress={() => (navigation as any).navigate('TransactionDetail', { transaction: item })}
+                                left={props => <List.Icon {...props} icon={item.type === 'income' ? 'arrow-up' : 'arrow-down'} color={item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense} />}
+                                right={() => <Text style={{ alignSelf: 'center', color: item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold' }}>{item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}</Text>}
                             />
                             {index < 4 && <Divider />}
                         </React.Fragment>

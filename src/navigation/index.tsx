@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// @ts-ignore
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 
@@ -11,7 +12,8 @@ import {
     DebtsScreen,
     AddDebtScreen,
     StatsScreen,
-    SettingsScreen
+    SettingsScreen,
+    TransactionDetailScreen
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -37,7 +39,7 @@ function TabNavigator() {
                 component={DashboardScreen}
                 options={{
                     tabBarLabel: 'Özet',
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
                         <MaterialCommunityIcons name="view-dashboard" color={color} size={size} />
                     ),
                 }}
@@ -47,7 +49,7 @@ function TabNavigator() {
                 component={TransactionsScreen}
                 options={{
                     tabBarLabel: 'İşlemler',
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
                         <MaterialCommunityIcons name="format-list-bulleted" color={color} size={size} />
                     ),
                 }}
@@ -57,7 +59,7 @@ function TabNavigator() {
                 component={StatsScreen}
                 options={{
                     tabBarLabel: 'Analiz',
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
                         <MaterialCommunityIcons name="chart-pie" color={color} size={size} />
                     ),
                 }}
@@ -67,7 +69,7 @@ function TabNavigator() {
                 component={DebtsScreen}
                 options={{
                     tabBarLabel: 'Borçlar',
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
                         <MaterialCommunityIcons name="handshake" color={color} size={size} />
                     ),
                 }}
@@ -106,6 +108,11 @@ export default function Navigation() {
                 name="Settings"
                 component={SettingsScreen}
                 options={{ title: 'Ayarlar' }}
+            />
+            <Stack.Screen
+                name="TransactionDetail"
+                component={TransactionDetailScreen}
+                options={{ title: 'İşlem Detayı' }}
             />
         </Stack.Navigator>
     );

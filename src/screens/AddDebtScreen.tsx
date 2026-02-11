@@ -26,7 +26,7 @@ export const AddDebtScreen = () => {
     const [dueDate, setDueDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+    const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<any>({
         resolver: zodResolver(schema),
         defaultValues: {
             personName: '',
@@ -35,7 +35,7 @@ export const AddDebtScreen = () => {
         }
     });
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (data: any) => {
         try {
             await addDebt({
                 type,
@@ -60,8 +60,8 @@ export const AddDebtScreen = () => {
                     value={type}
                     onValueChange={val => setType(val as any)}
                     buttons={[
-                        { value: 'receivable', label: 'Alacağım Var', style: { backgroundColor: type === 'receivable' ? theme.colors.customIncome + '20' : undefined } },
-                        { value: 'debt', label: 'Borcum Var', style: { backgroundColor: type === 'debt' ? theme.colors.customExpense + '20' : undefined } },
+                        { value: 'receivable', label: 'Alacak', style: { backgroundColor: type === 'receivable' ? (theme.colors as any).customIncome + '20' : undefined } },
+                        { value: 'debt', label: 'Borç', style: { backgroundColor: type === 'debt' ? (theme.colors as any).customExpense + '20' : undefined } },
                     ]}
                     style={styles.input}
                 />

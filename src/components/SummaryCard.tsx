@@ -15,8 +15,8 @@ export const SummaryCard = ({ title, amount, type, icon }: SummaryCardProps) => 
 
     const getColor = () => {
         switch (type) {
-            case 'income': return theme.colors.customIncome;
-            case 'expense': return theme.colors.customExpense;
+            case 'income': return (theme.colors as any).customIncome;
+            case 'expense': return (theme.colors as any).customExpense;
             case 'balance': return theme.colors.primary;
             default: return theme.colors.primary;
         }
