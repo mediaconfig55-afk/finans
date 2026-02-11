@@ -6,3 +6,4 @@ export * from './SettingsScreen';
 export * from './DebtsScreen';
 export * from './AddDebtScreen';
 export * from './TransactionDetailScreen';
+export * from './RemindersScreen';

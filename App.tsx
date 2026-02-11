@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AppLightTheme, AppDarkTheme } from './src/theme';
 import { initDatabase } from './src/database/db';
 import Navigation from './src/navigation';
+import { registerForPushNotificationsAsync } from './src/utils/notifications';
 
 export default function App() {
   const colorScheme = useColorScheme();
@@ -13,6 +14,7 @@ export default function App() {
 
   useEffect(() => {
     initDatabase();
+    registerForPushNotificationsAsync();
   }, []);
 
   return (

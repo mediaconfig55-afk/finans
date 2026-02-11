@@ -1,5 +1,5 @@
 import { getDB } from './db';
-import { Transaction, Installment, Debt } from '../types';
+import { Transaction, Installment, Debt, Reminder } from '../types';
 
 export const Repository = {
     async addTransaction(transaction: Omit<Transaction, 'id'>) {
@@ -144,5 +144,23 @@ export const Repository = {
              LIMIT 30`
         );
         return result;
+    },
+
+    async addReminder(reminder: Omit<Reminder, 'id'>) {
+        const db = await getDB();
+        await db.runAsync(
+            'INSERT INTO reminders (title, amount, dayOfMonth, type) VALUES (?, ?, ?, ?)',
+            [reminder.title, reminder.amount, reminder.dayOfMonth, reminder.type]
+        );
+    },
+
+    async getReminders() {
+        const db = await getDB();
+        return await db.getAllAsync<Reminder>('SELECT * FROM reminders ORDER BY dayOfMonth ASC');
+    },
+
+    async deleteReminder(id: number) {
+        const db = await getDB();
+        await db.runAsync('DELETE FROM reminders WHERE id = ?', [id]);
     }
 };

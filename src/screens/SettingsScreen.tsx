@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { List, Switch, useTheme, Divider, ActivityIndicator, Text } from 'react-native-paper';
+import { List, Switch, useTheme, Divider, ActivityIndicator, Text, Button } from 'react-native-paper';
 import { useStore } from '../store';
 import { exportToExcel } from '../utils/export';
 
@@ -38,13 +38,19 @@ export const SettingsScreen = () => {
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <List.Section>
                 <List.Subheader>Veri Yönetimi</List.Subheader>
-                <List.Item
-                    title="Excel Olarak İndir"
-                    description="Tüm verilerinizi .xlsx formatında dışa aktarın"
-                    left={props => <List.Icon {...props} icon="microsoft-excel" color={theme.colors.primary} />}
-                    right={() => exporting ? <ActivityIndicator animating={exporting} color={theme.colors.primary} /> : <List.Icon icon="chevron-right" />}
-                    onPress={handleExport}
-                />
+                <View style={{ padding: 16 }}>
+                    <Button
+                        mode="contained"
+                        onPress={handleExport}
+                        loading={exporting}
+                        icon="microsoft-excel"
+                    >
+                        Excel Olarak İndir
+                    </Button>
+                    <Text variant="bodySmall" style={{ marginTop: 8, color: theme.colors.outline }}>
+                        Tüm verilerinizi .xlsx formatında dışa aktarın
+                    </Text>
+                </View>
             </List.Section>
             <Divider />
 

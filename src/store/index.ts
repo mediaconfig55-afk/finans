@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Repository } from '../database/repository';
-import { Transaction, Installment, Debt } from '../types';
+import { Transaction, Installment, Debt, Reminder } from '../types';
 
 interface AppState {
     transactions: Transaction[];
@@ -25,6 +25,11 @@ interface AppState {
     dailySpending: { date: string; total: number }[];
     updateTransaction: (t: Transaction) => Promise<void>;
 
+    reminders: Reminder[];
+    fetchReminders: () => Promise<void>;
+    addReminder: (r: Omit<Reminder, 'id'>) => Promise<void>;
+    deleteReminder: (id: number) => Promise<void>;
+
     refreshDashboard: () => Promise<void>;
 }
 
@@ -32,7 +37,9 @@ export const useStore = create<AppState>((set, get) => ({
     transactions: [],
     installments: [],
     debts: [],
+
     dailySpending: [],
+    reminders: [],
     kpi: { totalIncome: 0, totalExpense: 0 },
     loading: false,
 
@@ -96,6 +103,21 @@ export const useStore = create<AppState>((set, get) => ({
     updateTransaction: async (t) => {
         await Repository.updateTransaction(t);
         get().refreshDashboard();
+    },
+
+    fetchReminders: async () => {
+        const reminders = await Repository.getReminders();
+        set({ reminders });
+    },
+
+    addReminder: async (r) => {
+        await Repository.addReminder(r);
+        await get().fetchReminders();
+    },
+
+    deleteReminder: async (id) => {
+        await Repository.deleteReminder(id);
+        await get().fetchReminders();
     },
 
     refreshDashboard: async () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
 import { TextInput, Button, SegmentedButtons, HelperText, useTheme, Switch, Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
@@ -10,7 +10,11 @@ import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
 
 const schema = z.object({
-    amount: z.string().min(1, 'Tutar gereklidir').transform((val) => parseFloat(val.replace(',', '.'))).refine((val) => !isNaN(val) && val > 0, 'Geçerli bir tutar giriniz'),
+    amount: z.string()
+        .min(1, 'Tutar gereklidir')
+        .transform((val) => val.replace(',', '.'))
+        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Geçerli bir tutar giriniz')
+        .transform((val) => parseFloat(val)),
     description: z.string().optional(),
     category: z.string().min(1, 'Kategori seçiniz'),
     isInstallment: z.boolean().optional(),
@@ -95,155 +99,157 @@ export const AddTransactionScreen = () => {
     };
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-            <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-                <SegmentedButtons
-                    value={type}
-                    onValueChange={(val: string) => {
-                        if (val === 'debt') {
-                            navigation.navigate('AddDebt' as never);
-                        } else {
-                            setType(val as any);
-                        }
-                    }}
-                    buttons={[
-                        { value: 'income', label: 'Gelir', style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
-                        { value: 'expense', label: 'Gider', style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
-                        { value: 'debt', label: 'Borç', style: { backgroundColor: theme.colors.surfaceVariant } },
-                    ]}
-                    style={styles.input}
-                />
-
-                <Controller
-                    control={control}
-                    name="amount"
-                    render={({ field: { onChange, value } }) => (
-                        <>
-                            <TextInput
-                                label="Tutar"
-                                value={value?.toString()}
-                                onChangeText={onChange}
-                                keyboardType="decimal-pad"
-                                mode="outlined"
-                                style={styles.input}
-                                error={!!errors.amount}
-                                left={<TextInput.Icon icon="currency-try" />}
-                            />
-                            <HelperText type="error" visible={!!errors.amount}>
-                                {errors.amount?.message as string}
-                            </HelperText>
-                        </>
-                    )}
-                />
-
-                {type === 'expense' && (
-                    <Controller
-                        control={control}
-                        name="isInstallment"
-                        render={({ field: { onChange, value } }) => (
-                            <View style={styles.switchContainer}>
-                                <Text variant="bodyLarge">Taksitli İşlem</Text>
-                                <Switch value={value} onValueChange={onChange} color={theme.colors.primary} />
-                            </View>
-                        )}
+                    <SegmentedButtons
+                        value={type}
+                        onValueChange={(val: string) => {
+                            if (val === 'debt') {
+                                navigation.navigate('AddDebt' as never);
+                            } else {
+                                setType(val as any);
+                            }
+                        }}
+                        buttons={[
+                            { value: 'income', label: 'Gelir', style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
+                            { value: 'expense', label: 'Gider', style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
+                            { value: 'debt', label: 'Borç', style: { backgroundColor: theme.colors.surfaceVariant } },
+                        ]}
+                        style={styles.input}
                     />
-                )}
 
-                {isInstallment && type === 'expense' && (
                     <Controller
                         control={control}
-                        name="installmentCount"
+                        name="amount"
                         render={({ field: { onChange, value } }) => (
                             <>
                                 <TextInput
-                                    label="Taksit Sayısı"
+                                    label="Tutar"
                                     value={value?.toString()}
                                     onChangeText={onChange}
-                                    keyboardType="number-pad"
+                                    keyboardType="decimal-pad"
                                     mode="outlined"
                                     style={styles.input}
-                                    error={!!errors.installmentCount}
+                                    error={!!errors.amount}
+                                    left={<TextInput.Icon icon="currency-try" />}
                                 />
-                                <HelperText type="error" visible={!!errors.installmentCount}>
-                                    {errors.installmentCount?.message as string}
+                                <HelperText type="error" visible={!!errors.amount}>
+                                    {errors.amount?.message as string}
                                 </HelperText>
                             </>
                         )}
                     />
-                )}
 
-                <Controller
-                    control={control}
-                    name="category"
-                    render={({ field: { onChange, value } }) => (
-                        <View style={styles.input}>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContainer}>
-                                {CATEGORIES[type].map((cat) => (
-                                    <Button
-                                        key={cat}
-                                        mode={value === cat ? 'contained' : 'outlined'}
-                                        onPress={() => onChange(cat)}
-                                        style={styles.categoryButton}
-                                        compact
-                                    >
-                                        {cat}
-                                    </Button>
-                                ))}
-                            </ScrollView>
-                            <HelperText type="error" visible={!!errors.category}>
-                                {errors.category?.message as string}
-                            </HelperText>
-                        </View>
-                    )}
-                />
-
-                <Button
-                    mode="outlined"
-                    onPress={() => setShowDatePicker(true)}
-                    style={styles.input}
-                    icon="calendar"
-                >
-                    {formatShortDate(date.toISOString())}
-                </Button>
-
-                {showDatePicker && (
-                    <DateTimePicker
-                        value={date}
-                        mode="date"
-                        display="default"
-                        onChange={(event: any, selectedDate?: Date) => {
-                            setShowDatePicker(false);
-                            if (selectedDate) setDate(selectedDate);
-                        }}
-                    />
-                )}
-
-                <Controller
-                    control={control}
-                    name="description"
-                    render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            label="Açıklama (Opsiyonel)"
-                            value={value}
-                            onChangeText={onChange}
-                            mode="outlined"
-                            style={styles.input}
+                    {type === 'expense' && (
+                        <Controller
+                            control={control}
+                            name="isInstallment"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.switchContainer}>
+                                    <Text variant="bodyLarge">Taksitli İşlem</Text>
+                                    <Switch value={value} onValueChange={onChange} color={theme.colors.primary} />
+                                </View>
+                            )}
                         />
                     )}
-                />
 
-                <Button
-                    mode="contained"
-                    onPress={handleSubmit(onSubmit)}
-                    loading={isSubmitting}
-                    style={styles.button}
-                >
-                    Kaydet
-                </Button>
+                    {isInstallment && type === 'expense' && (
+                        <Controller
+                            control={control}
+                            name="installmentCount"
+                            render={({ field: { onChange, value } }) => (
+                                <>
+                                    <TextInput
+                                        label="Taksit Sayısı"
+                                        value={value?.toString()}
+                                        onChangeText={onChange}
+                                        keyboardType="number-pad"
+                                        mode="outlined"
+                                        style={styles.input}
+                                        error={!!errors.installmentCount}
+                                    />
+                                    <HelperText type="error" visible={!!errors.installmentCount}>
+                                        {errors.installmentCount?.message as string}
+                                    </HelperText>
+                                </>
+                            )}
+                        />
+                    )}
 
-            </ScrollView>
-        </KeyboardAvoidingView>
+                    <Controller
+                        control={control}
+                        name="category"
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.input}>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContainer}>
+                                    {CATEGORIES[type].map((cat) => (
+                                        <Button
+                                            key={cat}
+                                            mode={value === cat ? 'contained' : 'outlined'}
+                                            onPress={() => onChange(cat)}
+                                            style={styles.categoryButton}
+                                            compact
+                                        >
+                                            {cat}
+                                        </Button>
+                                    ))}
+                                </ScrollView>
+                                <HelperText type="error" visible={!!errors.category}>
+                                    {errors.category?.message as string}
+                                </HelperText>
+                            </View>
+                        )}
+                    />
+
+                    <Button
+                        mode="outlined"
+                        onPress={() => setShowDatePicker(true)}
+                        style={styles.input}
+                        icon="calendar"
+                    >
+                        {formatShortDate(date.toISOString())}
+                    </Button>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={date}
+                            mode="date"
+                            display="default"
+                            onChange={(event: any, selectedDate?: Date) => {
+                                setShowDatePicker(false);
+                                if (selectedDate) setDate(selectedDate);
+                            }}
+                        />
+                    )}
+
+                    <Controller
+                        control={control}
+                        name="description"
+                        render={({ field: { onChange, value } }) => (
+                            <TextInput
+                                label="Açıklama (Opsiyonel)"
+                                value={value}
+                                onChangeText={onChange}
+                                mode="outlined"
+                                style={styles.input}
+                            />
+                        )}
+                    />
+
+                    <Button
+                        mode="contained"
+                        onPress={handleSubmit(onSubmit)}
+                        loading={isSubmitting}
+                        style={styles.button}
+                    >
+                        Kaydet
+                    </Button>
+
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 

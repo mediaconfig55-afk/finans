@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
 import { TextInput, Button, SegmentedButtons, HelperText, useTheme } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
@@ -11,7 +11,11 @@ import { formatShortDate } from '../utils/format';
 
 const schema = z.object({
     personName: z.string().min(1, 'Kişi adı gereklidir'),
-    amount: z.string().min(1, 'Tutar gereklidir').transform((val) => parseFloat(val.replace(',', '.'))).refine((val) => !isNaN(val) && val > 0, 'Geçerli bir tutar giriniz'),
+    amount: z.string()
+        .min(1, 'Tutar gereklidir')
+        .transform((val) => val.replace(',', '.'))
+        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Geçerli bir tutar giriniz')
+        .transform((val) => parseFloat(val)),
     description: z.string().optional(),
 });
 
@@ -53,107 +57,109 @@ export const AddDebtScreen = () => {
     };
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-            <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-                <SegmentedButtons
-                    value={type}
-                    onValueChange={val => setType(val as any)}
-                    buttons={[
-                        { value: 'receivable', label: 'Alacak', style: { backgroundColor: type === 'receivable' ? (theme.colors as any).customIncome + '20' : undefined } },
-                        { value: 'debt', label: 'Borç', style: { backgroundColor: type === 'debt' ? (theme.colors as any).customExpense + '20' : undefined } },
-                    ]}
-                    style={styles.input}
-                />
+                    <SegmentedButtons
+                        value={type}
+                        onValueChange={val => setType(val as any)}
+                        buttons={[
+                            { value: 'receivable', label: 'Alacak', style: { backgroundColor: type === 'receivable' ? (theme.colors as any).customIncome + '20' : undefined } },
+                            { value: 'debt', label: 'Borç', style: { backgroundColor: type === 'debt' ? (theme.colors as any).customExpense + '20' : undefined } },
+                        ]}
+                        style={styles.input}
+                    />
 
-                <Controller
-                    control={control}
-                    name="personName"
-                    render={({ field: { onChange, value } }) => (
-                        <>
+                    <Controller
+                        control={control}
+                        name="personName"
+                        render={({ field: { onChange, value } }) => (
+                            <>
+                                <TextInput
+                                    label="Kişi Adı"
+                                    value={value}
+                                    onChangeText={onChange}
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={!!errors.personName}
+                                />
+                                <HelperText type="error" visible={!!errors.personName}>
+                                    {errors.personName?.message as string}
+                                </HelperText>
+                            </>
+                        )}
+                    />
+
+                    <Controller
+                        control={control}
+                        name="amount"
+                        render={({ field: { onChange, value } }) => (
+                            <>
+                                <TextInput
+                                    label="Tutar"
+                                    value={value?.toString()}
+                                    onChangeText={onChange}
+                                    keyboardType="decimal-pad"
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={!!errors.amount}
+                                    left={<TextInput.Icon icon="currency-try" />}
+                                />
+                                <HelperText type="error" visible={!!errors.amount}>
+                                    {errors.amount?.message as string}
+                                </HelperText>
+                            </>
+                        )}
+                    />
+
+                    <Button
+                        mode="outlined"
+                        onPress={() => setShowDatePicker(true)}
+                        style={styles.input}
+                        icon="calendar"
+                    >
+                        Vade Tarihi: {formatShortDate(dueDate.toISOString())}
+                    </Button>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={dueDate}
+                            mode="date"
+                            display="default"
+                            onChange={(event, selectedDate) => {
+                                setShowDatePicker(false);
+                                if (selectedDate) setDueDate(selectedDate);
+                            }}
+                        />
+                    )}
+
+                    <Controller
+                        control={control}
+                        name="description"
+                        render={({ field: { onChange, value } }) => (
                             <TextInput
-                                label="Kişi Adı"
+                                label="Açıklama (Opsiyonel)"
                                 value={value}
                                 onChangeText={onChange}
                                 mode="outlined"
                                 style={styles.input}
-                                error={!!errors.personName}
                             />
-                            <HelperText type="error" visible={!!errors.personName}>
-                                {errors.personName?.message as string}
-                            </HelperText>
-                        </>
-                    )}
-                />
-
-                <Controller
-                    control={control}
-                    name="amount"
-                    render={({ field: { onChange, value } }) => (
-                        <>
-                            <TextInput
-                                label="Tutar"
-                                value={value?.toString()}
-                                onChangeText={onChange}
-                                keyboardType="decimal-pad"
-                                mode="outlined"
-                                style={styles.input}
-                                error={!!errors.amount}
-                                left={<TextInput.Icon icon="currency-try" />}
-                            />
-                            <HelperText type="error" visible={!!errors.amount}>
-                                {errors.amount?.message as string}
-                            </HelperText>
-                        </>
-                    )}
-                />
-
-                <Button
-                    mode="outlined"
-                    onPress={() => setShowDatePicker(true)}
-                    style={styles.input}
-                    icon="calendar"
-                >
-                    Vade Tarihi: {formatShortDate(dueDate.toISOString())}
-                </Button>
-
-                {showDatePicker && (
-                    <DateTimePicker
-                        value={dueDate}
-                        mode="date"
-                        display="default"
-                        onChange={(event, selectedDate) => {
-                            setShowDatePicker(false);
-                            if (selectedDate) setDueDate(selectedDate);
-                        }}
+                        )}
                     />
-                )}
 
-                <Controller
-                    control={control}
-                    name="description"
-                    render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            label="Açıklama (Opsiyonel)"
-                            value={value}
-                            onChangeText={onChange}
-                            mode="outlined"
-                            style={styles.input}
-                        />
-                    )}
-                />
+                    <Button
+                        mode="contained"
+                        onPress={handleSubmit(onSubmit)}
+                        loading={isSubmitting}
+                        style={styles.button}
+                    >
+                        Kaydet
+                    </Button>
 
-                <Button
-                    mode="contained"
-                    onPress={handleSubmit(onSubmit)}
-                    loading={isSubmitting}
-                    style={styles.button}
-                >
-                    Kaydet
-                </Button>
-
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 

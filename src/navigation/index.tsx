@@ -13,7 +13,8 @@ import {
     AddDebtScreen,
     StatsScreen,
     SettingsScreen,
-    TransactionDetailScreen
+    TransactionDetailScreen,
+    RemindersScreen
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -113,6 +114,11 @@ export default function Navigation() {
                 name="TransactionDetail"
                 component={TransactionDetailScreen}
                 options={{ title: 'İşlem Detayı' }}
+            />
+            <Stack.Screen
+                name="Reminders"
+                component={RemindersScreen}
+                options={{ title: 'Fatura Hatırlatıcı' }}
             />
         </Stack.Navigator>
     );

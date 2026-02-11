@@ -44,6 +44,14 @@ export const initDatabase = async () => {
         isPaid INTEGER DEFAULT 0,
         description TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        amount REAL NOT NULL,
+        dayOfMonth INTEGER NOT NULL,
+        type TEXT DEFAULT 'bill'
+      );
     `);
     console.log('Database initialized successfully');
   } catch (error) {

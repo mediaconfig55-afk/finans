@@ -29,3 +29,11 @@ export interface Debt {
   isPaid: number; // 0 or 1 for SQLite boolean
   description?: string;
 }
+
+export interface Reminder {
+  id: number;
+  title: string;
+  amount: number;
+  dayOfMonth: number;
+  type: string;
+}

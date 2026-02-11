@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { List, Text, useTheme, Divider, Searchbar, Chip } from 'react-native-paper';
 import { useStore } from '../store';
@@ -44,55 +44,57 @@ export const TransactionsScreen = () => {
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={styles.header}>
-                <Searchbar
-                    placeholder="Ara..."
-                    onChangeText={setSearchQuery}
-                    value={searchQuery}
-                    style={styles.searchBar}
-                />
-                <View style={styles.chips}>
-                    <Chip
-                        selected={filterType === 'all'}
-                        onPress={() => setFilterType('all')}
-                        showSelectedOverlay
-                        style={styles.chip}
-                    >
-                        Tümü
-                    </Chip>
-                    <Chip
-                        selected={filterType === 'income'}
-                        onPress={() => setFilterType('income')}
-                        showSelectedOverlay
-                        style={styles.chip}
-                    >
-                        Gelir
-                    </Chip>
-                    <Chip
-                        selected={filterType === 'expense'}
-                        onPress={() => setFilterType('expense')}
-                        showSelectedOverlay
-                        style={styles.chip}
-                    >
-                        Gider
-                    </Chip>
-                </View>
-            </View>
-
-            <FlatList
-                data={filteredData}
-                keyExtractor={item => item.id.toString()}
-                renderItem={renderItem}
-                ItemSeparatorComponent={Divider}
-                contentContainerStyle={styles.listContent}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Text>İşlem bulunamadı.</Text>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={styles.header}>
+                    <Searchbar
+                        placeholder="Ara..."
+                        onChangeText={setSearchQuery}
+                        value={searchQuery}
+                        style={styles.searchBar}
+                    />
+                    <View style={styles.chips}>
+                        <Chip
+                            selected={filterType === 'all'}
+                            onPress={() => setFilterType('all')}
+                            showSelectedOverlay
+                            style={styles.chip}
+                        >
+                            Tümü
+                        </Chip>
+                        <Chip
+                            selected={filterType === 'income'}
+                            onPress={() => setFilterType('income')}
+                            showSelectedOverlay
+                            style={styles.chip}
+                        >
+                            Gelir
+                        </Chip>
+                        <Chip
+                            selected={filterType === 'expense'}
+                            onPress={() => setFilterType('expense')}
+                            showSelectedOverlay
+                            style={styles.chip}
+                        >
+                            Gider
+                        </Chip>
                     </View>
-                }
-            />
-        </View>
+                </View>
+
+                <FlatList
+                    data={filteredData}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={renderItem}
+                    ItemSeparatorComponent={Divider}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Text>İşlem bulunamadı.</Text>
+                        </View>
+                    }
+                />
+            </View>
+        </SafeAreaView>
     );
 };
 

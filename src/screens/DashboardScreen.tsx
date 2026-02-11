@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Text, useTheme, FAB, List, Divider } from 'react-native-paper';
+import { Text, useTheme, FAB, List, Divider, IconButton, Surface } from 'react-native-paper';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { SummaryCard } from '../components/SummaryCard';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
@@ -9,11 +10,12 @@ import { formatCurrency, formatShortDate } from '../utils/format';
 export const DashboardScreen = () => {
     const theme = useTheme();
     const navigation = useNavigation();
-    const { kpi, transactions, refreshDashboard, loading, dailySpending } = useStore();
+    const { kpi, transactions, refreshDashboard, loading, dailySpending, reminders, fetchReminders } = useStore();
 
     useFocusEffect(
         useCallback(() => {
             refreshDashboard();
+            fetchReminders();
         }, [])
     );
 
@@ -33,11 +35,38 @@ export const DashboardScreen = () => {
             >
                 {/* Header Section */}
                 <View style={styles.header}>
-                    <Text variant="headlineMedium" style={styles.greeting}>Hoş Geldiniz 👋</Text>
-                    <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant }}>
-                        Finansal Durumunuz
-                    </Text>
+                    <View>
+                        <Text variant="headlineMedium" style={styles.greeting}>Hoş Geldiniz 👋</Text>
+                        <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant }}>
+                            Finansal Durumunuz
+                        </Text>
+                    </View>
+                    <IconButton
+                        icon="cog"
+                        size={28}
+                        onPress={() => (navigation as any).navigate('Settings')}
+                    />
                 </View>
+
+                {/* Reminders Widget */}
+                <Surface style={[styles.reminderWidget, { backgroundColor: theme.colors.tertiaryContainer }]} elevation={2}>
+                    <View style={styles.reminderHeader}>
+                        <Text variant="titleMedium" style={{ color: theme.colors.onTertiaryContainer }}>🔔 Yaklaşan Ödemeler</Text>
+                        <IconButton
+                            icon="arrow-right"
+                            size={20}
+                            iconColor={theme.colors.onTertiaryContainer}
+                            onPress={() => (navigation as any).navigate('Reminders')}
+                        />
+                    </View>
+                    {reminders.slice(0, 2).map(r => (
+                        <View key={r.id} style={styles.reminderItem}>
+                            <Text style={{ color: theme.colors.onTertiaryContainer }}>{r.title} ({r.dayOfMonth}. gün)</Text>
+                            <Text style={{ fontWeight: 'bold', color: theme.colors.onTertiaryContainer }}>{formatCurrency(r.amount)}</Text>
+                        </View>
+                    ))}
+                    {reminders.length === 0 && <Text style={{ color: theme.colors.onTertiaryContainer, opacity: 0.7 }}>Hatırlatıcı yok.</Text>}
+                </Surface>
 
                 {/* Summary Cards */}
                 <View style={styles.summaryRow}>
@@ -128,6 +157,9 @@ const styles = StyleSheet.create({
     header: {
         marginBottom: 20,
         marginTop: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     greeting: {
         fontWeight: 'bold',
@@ -137,7 +169,23 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     balanceRow: {
+        marginBottom: 16,
+    },
+    reminderWidget: {
+        padding: 16,
+        borderRadius: 16,
         marginBottom: 24,
+    },
+    reminderHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    reminderItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 4,
     },
     sectionHeader: {
         flexDirection: 'row',
