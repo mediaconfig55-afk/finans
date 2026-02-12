@@ -9,11 +9,12 @@ import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
 import { Transaction } from '../types';
+import i18n from '../i18n';
 
 const schema = z.object({
-    amount: z.string().min(1, 'Tutar gereklidir').transform((val) => parseFloat(val.replace(',', '.'))).refine((val) => !isNaN(val) && val > 0, 'Geçerli bir tutar giriniz'),
+    amount: z.string().min(1, i18n.t('amountRequired')).transform((val) => parseFloat(val.replace(',', '.'))).refine((val) => !isNaN(val) && val > 0, i18n.t('validAmountRequired')),
     description: z.string().optional(),
-    category: z.string().min(1, 'Kategori seçiniz'),
+    category: z.string().min(1, i18n.t('categoryRequired')),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -48,10 +49,10 @@ export const TransactionDetailScreen = () => {
         navigation.setOptions({
             headerRight: () => (
                 !isEditing ? (
-                    <Button onPress={() => setIsEditing(true)}>Düzenle</Button>
+                    <Button onPress={() => setIsEditing(true)}>{i18n.t('edit')}</Button>
                 ) : null
             ),
-            title: isEditing ? 'İşlemi Düzenle' : 'İşlem Detayı'
+            title: isEditing ? i18n.t('editTransaction') : i18n.t('transactionDetail')
         });
     }, [navigation, isEditing]);
 
@@ -65,23 +66,23 @@ export const TransactionDetailScreen = () => {
                 date: date.toISOString(),
                 description: data.description,
             });
-            Alert.alert('Başarılı', 'İşlem güncellendi');
+            Alert.alert(i18n.t('success'), i18n.t('transactionUpdated'));
             setIsEditing(false);
             navigation.goBack();
         } catch (error) {
             console.error(error);
-            Alert.alert('Hata', 'Güncelleme sırasında bir hata oluştu');
+            Alert.alert(i18n.t('error'), i18n.t('updateError'));
         }
     };
 
     const handleDelete = () => {
         Alert.alert(
-            'Sil',
-            'Bu işlemi silmek istediğinizden emin misiniz?',
+            i18n.t('delete'),
+            i18n.t('deleteTransactionMessage'),
             [
-                { text: 'Vazgeç', style: 'cancel' },
+                { text: i18n.t('cancel'), style: 'cancel' },
                 {
-                    text: 'Sil',
+                    text: i18n.t('delete'),
                     style: 'destructive',
                     onPress: async () => {
                         await deleteTransaction(transaction.id);
@@ -99,14 +100,14 @@ export const TransactionDetailScreen = () => {
                     <Text variant="headlineMedium" style={{ color: type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold', marginBottom: 8 }}>
                         {type === 'income' ? '+' : '-'}{transaction.amount} ₺
                     </Text>
-                    <Text variant="titleMedium" style={{ marginBottom: 4 }}>{transaction.category}</Text>
+                    <Text variant="headlineSmall" style={{ fontWeight: 'bold', marginBottom: 8 }}>{i18n.t(transaction.category)}</Text>
                     <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}>{formatShortDate(transaction.date)}</Text>
 
-                    <Text variant="bodyLarge">{transaction.description || 'Açıklama yok'}</Text>
+                    <Text variant="bodyLarge">{transaction.description || i18n.t('noDescription')}</Text>
                 </View>
 
                 <Button mode="contained-tonal" icon="delete" onPress={handleDelete} style={{ marginTop: 24 }} textColor={theme.colors.error}>
-                    İşlemi Sil
+                    {i18n.t('deleteTransaction')}
                 </Button>
             </ScrollView>
         );
@@ -120,8 +121,8 @@ export const TransactionDetailScreen = () => {
                     value={type}
                     onValueChange={val => setType(val as any)}
                     buttons={[
-                        { value: 'income', label: 'Gelir', style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
-                        { value: 'expense', label: 'Gider', style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
+                        { value: 'income', label: i18n.t('income'), style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
+                        { value: 'expense', label: i18n.t('expense'), style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
                     ]}
                     style={styles.input}
                 />
@@ -132,7 +133,7 @@ export const TransactionDetailScreen = () => {
                     render={({ field: { onChange, value } }) => (
                         <>
                             <TextInput
-                                label="Tutar"
+                                label={i18n.t('amount')}
                                 value={value?.toString()}
                                 onChangeText={onChange}
                                 keyboardType="decimal-pad"
@@ -199,7 +200,7 @@ export const TransactionDetailScreen = () => {
                     name="description"
                     render={({ field: { onChange, value } }) => (
                         <TextInput
-                            label="Açıklama"
+                            label={i18n.t('description')}
                             value={value}
                             onChangeText={onChange}
                             mode="outlined"
@@ -210,10 +211,10 @@ export const TransactionDetailScreen = () => {
 
                 <View style={styles.buttonRow}>
                     <Button mode="outlined" onPress={() => setIsEditing(false)} style={{ flex: 1, marginRight: 8 }}>
-                        İptal
+                        {i18n.t('cancel')}
                     </Button>
                     <Button mode="contained" onPress={handleSubmit(onSubmit)} loading={isSubmitting} style={{ flex: 1 }}>
-                        Kaydet
+                        {i18n.t('save')}
                     </Button>
                 </View>
 

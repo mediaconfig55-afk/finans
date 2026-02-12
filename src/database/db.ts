@@ -40,6 +40,7 @@ export const initDatabase = async () => {
         type TEXT NOT NULL CHECK (type IN ('debt', 'receivable')),
         personName TEXT NOT NULL,
         amount REAL NOT NULL,
+        paidAmount REAL DEFAULT 0,
         dueDate TEXT,
         isPaid INTEGER DEFAULT 0,
         description TEXT
@@ -53,6 +54,14 @@ export const initDatabase = async () => {
         type TEXT DEFAULT 'bill'
       );
     `);
+
+    // Migration for existing tables
+    try {
+      await db.execAsync('ALTER TABLE debts ADD COLUMN paidAmount REAL DEFAULT 0;');
+    } catch (e) {
+      // Column likely exists
+    }
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);

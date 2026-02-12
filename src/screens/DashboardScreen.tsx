@@ -1,16 +1,18 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, useTheme, FAB, List, Divider, IconButton, Surface, Avatar, Button, Icon } from 'react-native-paper';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SummaryCard } from '../components/SummaryCard';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
+import i18n from '../i18n';
+import { RootStackParamList } from '../navigation';
 
 export const DashboardScreen = () => {
     const theme = useTheme();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const { kpi, transactions, refreshDashboard, loading, dailySpending, reminders, fetchReminders } = useStore();
 
     useFocusEffect(
@@ -36,18 +38,18 @@ export const DashboardScreen = () => {
             >
                 {/* Header Section */}
                 <View style={styles.header}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Avatar.Image size={48} source={require('../../assets/icon.png')} style={{ backgroundColor: 'transparent' }} />
-                        <View style={{ marginLeft: 12 }}>
-                            <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant }}>Hoş geldin,</Text>
-                            <Text variant="headlineSmall" style={{ fontWeight: 'bold', color: theme.colors.primary }}>FİNANSIM</Text>
+                    <View style={styles.headerContent}>
+                        <Avatar.Image size={48} source={require('../../assets/icon.png')} style={styles.avatar} />
+                        <View style={styles.headerTextContainer}>
+                            <Text variant="titleMedium" style={styles.welcomeText}>{i18n.t('welcome')}</Text>
+                            <Text variant="headlineSmall" style={styles.brandText}>FİNANSIM</Text>
                         </View>
                     </View>
                     <IconButton
                         icon="cog"
                         iconColor={theme.colors.onSurface}
                         size={28}
-                        onPress={() => (navigation as any).navigate('Settings')}
+                        onPress={() => navigation.navigate('Settings')}
                     />
                 </View>
 
@@ -57,25 +59,25 @@ export const DashboardScreen = () => {
                     style={styles.widgetGradient}
                 >
                     <View style={styles.widgetHeader}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={styles.widgetTitleContainer}>
                             <Icon source="bell-ring" size={24} color={theme.colors.secondary} />
-                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>Yaklaşan Ödemeler</Text>
+                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{i18n.t('upcomingPayments')}</Text>
                         </View>
-                        <Button mode="text" textColor={theme.colors.secondary} onPress={() => (navigation as any).navigate('Reminders')}>Tümü</Button>
+                        <Button mode="text" textColor={theme.colors.secondary} onPress={() => navigation.navigate('Reminders')}>{i18n.t('viewAll')}</Button>
                     </View>
 
                     {reminders.slice(0, 2).length === 0 ? (
-                        <Text style={{ color: theme.colors.onSurfaceVariant, fontStyle: 'italic' }}>Yaklaşan ödeme yok.</Text>
+                        <Text style={styles.noRemindersText}>{i18n.t('noUpcomingPayments')}</Text>
                     ) : (
                         reminders.slice(0, 2).map((item) => (
                             <View key={item.id} style={styles.reminderItem}>
                                 <View style={styles.reminderDate}>
-                                    <Text style={{ fontWeight: 'bold', color: '#FFF', textAlign: 'center' }}>{item.dayOfMonth}</Text>
-                                    <Text style={{ fontSize: 10, color: '#FFF' }}>GÜN</Text>
+                                    <Text style={styles.reminderDayText}>{item.dayOfMonth}</Text>
+                                    <Text style={styles.reminderLabelText}>{i18n.t('day')}</Text>
                                 </View>
                                 <View style={{ flex: 1, marginLeft: 12 }}>
                                     <Text variant="bodyLarge" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{item.title}</Text>
-                                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Her ayın {item.dayOfMonth}. günü</Text>
+                                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{i18n.t('everyMonthDay', { day: item.dayOfMonth })}</Text>
                                 </View>
                                 <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>{formatCurrency(item.amount)}</Text>
                             </View>
@@ -86,13 +88,13 @@ export const DashboardScreen = () => {
                 {/* Summary Cards */}
                 <View style={styles.summaryRow}>
                     <SummaryCard
-                        title="Gelir"
+                        title={i18n.t('income')}
                         amount={kpi.totalIncome}
                         type="income"
                         icon="arrow-up-circle"
                     />
                     <SummaryCard
-                        title="Gider"
+                        title={i18n.t('expense')}
                         amount={kpi.totalExpense}
                         type="expense"
                         icon="arrow-down-circle"
@@ -100,7 +102,7 @@ export const DashboardScreen = () => {
                 </View>
                 <View style={styles.balanceRow}>
                     <SummaryCard
-                        title="Net Bakiye"
+                        title={i18n.t('netBalance')}
                         amount={balance}
                         type="balance"
                         icon="wallet"
@@ -110,7 +112,7 @@ export const DashboardScreen = () => {
                 {/* Daily Spending Widget */}
                 <View style={styles.summaryRow}>
                     <SummaryCard
-                        title="Bugünkü Harcama"
+                        title={i18n.t('todaysSpending')}
                         amount={todaysSpending}
                         type="expense"
                         icon="calendar-today"
@@ -119,13 +121,13 @@ export const DashboardScreen = () => {
 
                 {/* Recent Transactions */}
                 <View style={styles.sectionHeader}>
-                    <Text variant="titleLarge">Son İşlemler</Text>
+                    <Text variant="titleLarge">{i18n.t('recentTransactions')}</Text>
                     <Text
                         variant="labelLarge"
                         style={{ color: theme.colors.primary }}
                         onPress={() => navigation.navigate('TransactionsTab' as never)}
                     >
-                        Tümünü Gör
+                        {i18n.t('seeAll')}
                     </Text>
                 </View>
 
@@ -133,11 +135,11 @@ export const DashboardScreen = () => {
                     {transactions.slice(0, 5).map((item, index) => (
                         <React.Fragment key={item.id}>
                             <List.Item
-                                title={item.category}
+                                title={i18n.t(item.category)}
                                 description={item.description || formatShortDate(item.date)}
                                 titleStyle={{ fontWeight: 'bold', color: theme.colors.onSurface }}
                                 descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-                                onPress={() => (navigation as any).navigate('TransactionDetail', { transaction: item })}
+                                onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
                                 left={props => <View style={{ justifyContent: 'center', marginLeft: 10 }}><Icon source={item.type === 'income' ? 'arrow-up' : 'arrow-down'} size={24} color={item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense} /></View>}
                                 right={() => <Text style={{ alignSelf: 'center', color: item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold', marginRight: 10 }}>{item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}</Text>}
                             />
@@ -145,8 +147,8 @@ export const DashboardScreen = () => {
                         </React.Fragment>
                     ))}
                     {transactions.length === 0 && (
-                        <View style={{ padding: 20, alignItems: 'center' }}>
-                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>Henüz işlem yok.</Text>
+                        <View style={styles.emptyContainer}>
+                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>{i18n.t('noTransactionsYet')}</Text>
                         </View>
                     )}
                 </Surface>
@@ -232,5 +234,42 @@ const styles = StyleSheet.create({
     listContainer: {
         borderRadius: 12,
         overflow: 'hidden',
+    },
+    headerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    avatar: {
+        backgroundColor: 'transparent',
+    },
+    headerTextContainer: {
+        marginLeft: 12,
+    },
+    welcomeText: {
+
+    },
+    brandText: {
+        fontWeight: 'bold',
+    },
+    widgetTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    noRemindersText: {
+        fontStyle: 'italic',
+    },
+    reminderDayText: {
+        fontWeight: 'bold',
+        color: '#FFF',
+        textAlign: 'center',
+    },
+    reminderLabelText: {
+        fontSize: 10,
+        color: '#FFF',
+    },
+    emptyContainer: {
+        padding: 20,
+        alignItems: 'center',
     },
 });

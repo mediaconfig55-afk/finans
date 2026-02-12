@@ -2,43 +2,43 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
 import { TextInput, Button, SegmentedButtons, HelperText, useTheme, Switch, Text, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
+import i18n from '../i18n';
+import { RootStackParamList } from '../navigation';
 
 const schema = z.object({
     amount: z.string()
-        .min(1, 'Tutar gereklidir')
-        .transform((val) => val.replace(',', '.'))
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Geçerli bir tutar giriniz')
-        .transform((val) => parseFloat(val)),
+        .min(1, i18n.t('amountRequired'))
+        .refine((val) => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, i18n.t('validAmountRequired')),
     description: z.string().optional(),
-    category: z.string().min(1, 'Kategori seçiniz'),
+    category: z.string().min(1, i18n.t('categoryRequired')),
     isInstallment: z.boolean().optional(),
-    installmentCount: z.string().optional().transform((val) => val ? parseInt(val) : 0),
+    installmentCount: z.string().optional(),
 }).refine((data) => {
-    if (data.isInstallment && (!data.installmentCount || data.installmentCount < 2)) {
+    if (data.isInstallment && (!data.installmentCount || parseInt(data.installmentCount) < 2)) {
         return false;
     }
     return true;
 }, {
-    message: "Taksit sayısı en az 2 olmalıdır",
+    message: i18n.t('minInstallment'),
     path: ["installmentCount"]
 });
 
 type FormData = z.infer<typeof schema>;
 
 const CATEGORIES = {
-    income: ['Maaş', 'Ek Gelir', 'Yatırım', 'Diğer'],
-    expense: ['Gıda', 'Ulaşım', 'Fatura', 'Eğlence', 'Kira', 'Sağlık', 'Giyim', 'Teknoloji', 'Diğer'],
+    income: ['salary', 'extraIncome', 'investment', 'other'] as const,
+    expense: ['food', 'transport', 'bill', 'entertainment', 'rent', 'health', 'clothing', 'technology', 'other'] as const,
 };
 
 export const AddTransactionScreen = () => {
     const theme = useTheme();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const { addTransaction, addInstallment } = useStore();
 
     const [type, setType] = useState<'income' | 'expense'>('expense');
@@ -52,7 +52,7 @@ export const AddTransactionScreen = () => {
         setSnackbarVisible(true);
     };
 
-    const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<any>({
+    const { control, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: {
             amount: '',
@@ -65,18 +65,20 @@ export const AddTransactionScreen = () => {
 
     const isInstallment = watch('isInstallment');
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: FormData) => {
         try {
             if (type === 'expense' && data.isInstallment && data.installmentCount) {
                 // Handle Installment
-                const monthlyAmount = data.amount / data.installmentCount;
+                const amountVal = parseFloat(data.amount.replace(',', '.'));
+                const countVal = parseInt(data.installmentCount);
+                const monthlyAmount = amountVal / countVal;
 
                 await addInstallment({
-                    totalAmount: data.amount,
-                    totalMonths: data.installmentCount,
-                    remainingMonths: data.installmentCount,
+                    totalAmount: amountVal,
+                    totalMonths: countVal,
+                    remainingMonths: countVal,
                     startDate: date.toISOString(),
-                    description: data.description || `${data.category} Taksiti`,
+                    description: data.description || `${i18n.t(data.category)} ${i18n.t('installment')}`,
                 });
 
                 // Add first month transaction immediately
@@ -85,51 +87,52 @@ export const AddTransactionScreen = () => {
                     amount: monthlyAmount,
                     category: data.category,
                     date: date.toISOString(),
-                    description: `${data.description || 'Taksit'} (1/${data.installmentCount})`,
+                    description: `${data.description || i18n.t('installment')} (1/${countVal})`,
                 });
-                showToast(`Taksitli işlem başarıyla eklendi ✓`);
+                showToast(i18n.t('saveSuccess', { type: i18n.t('installment') + ' ' + i18n.t('transactionDetail') })); // Adjusted for simplicity
                 setTimeout(() => {
                     navigation.goBack();
                 }, 1000);
 
             } else {
                 // Normal Transaction
+                const amountVal = parseFloat(data.amount.replace(',', '.'));
                 await addTransaction({
                     type,
-                    amount: data.amount,
+                    amount: amountVal,
                     category: data.category,
                     description: data.description,
                     date: date.toISOString().split('T')[0],
                 });
-                showToast(`${type === 'income' ? 'Gelir' : 'Gider'} başarıyla eklendi ✓`);
+                showToast(i18n.t('saveSuccess', { type: i18n.t(type) }));
                 setTimeout(() => {
                     navigation.goBack();
                 }, 1000);
             }
         } catch (error) {
             console.error(error);
-            Alert.alert('Hata', 'İşlem kaydedilirken bir hata oluştu');
+            Alert.alert(i18n.t('error'), i18n.t('saveError'));
         }
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboardView}>
                 <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
 
                     <SegmentedButtons
                         value={type}
                         onValueChange={(val: string) => {
                             if (val === 'debt') {
-                                navigation.navigate('AddDebt' as never);
+                                navigation.navigate('AddDebt');
                             } else {
                                 setType(val as any);
                             }
                         }}
                         buttons={[
-                            { value: 'income', label: 'Gelir', style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
-                            { value: 'expense', label: 'Gider', style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
-                            { value: 'debt', label: 'Borç', style: { backgroundColor: theme.colors.surfaceVariant } },
+                            { value: 'income', label: i18n.t('income'), style: { backgroundColor: type === 'income' ? (theme.colors as any).customIncome + '20' : undefined } },
+                            { value: 'expense', label: i18n.t('expense'), style: { backgroundColor: type === 'expense' ? (theme.colors as any).customExpense + '20' : undefined } },
+                            { value: 'debt', label: i18n.t('debt'), style: { backgroundColor: theme.colors.surfaceVariant } },
                         ]}
                         style={styles.input}
                     />
@@ -140,7 +143,7 @@ export const AddTransactionScreen = () => {
                         render={({ field: { onChange, value } }) => (
                             <>
                                 <TextInput
-                                    label="Tutar"
+                                    label={i18n.t('amount')}
                                     value={value?.toString()}
                                     onChangeText={onChange}
                                     keyboardType="decimal-pad"
@@ -162,7 +165,7 @@ export const AddTransactionScreen = () => {
                             name="isInstallment"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.switchContainer}>
-                                    <Text variant="bodyLarge">Taksitli İşlem</Text>
+                                    <Text variant="bodyLarge">{i18n.t('installment')}</Text>
                                     <Switch value={value} onValueChange={onChange} color={theme.colors.primary} />
                                 </View>
                             )}
@@ -176,7 +179,7 @@ export const AddTransactionScreen = () => {
                             render={({ field: { onChange, value } }) => (
                                 <>
                                     <TextInput
-                                        label="Taksit Sayısı"
+                                        label={i18n.t('installmentCount')}
                                         value={value?.toString()}
                                         onChangeText={onChange}
                                         keyboardType="number-pad"
@@ -206,7 +209,7 @@ export const AddTransactionScreen = () => {
                                             style={styles.categoryButton}
                                             compact
                                         >
-                                            {cat}
+                                            {i18n.t(cat)}
                                         </Button>
                                     ))}
                                 </ScrollView>
@@ -243,7 +246,7 @@ export const AddTransactionScreen = () => {
                         name="description"
                         render={({ field: { onChange, value } }) => (
                             <TextInput
-                                label="Açıklama (Opsiyonel)"
+                                label={i18n.t('descriptionOptional')}
                                 value={value}
                                 onChangeText={onChange}
                                 mode="outlined"
@@ -258,7 +261,7 @@ export const AddTransactionScreen = () => {
                         loading={isSubmitting}
                         style={styles.button}
                     >
-                        Kaydet
+                        {i18n.t('save')}
                     </Button>
 
                 </ScrollView>
@@ -280,6 +283,12 @@ export const AddTransactionScreen = () => {
 };
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+    },
+    keyboardView: {
+        flex: 1,
+    },
     container: {
         padding: 16,
         flexGrow: 1,

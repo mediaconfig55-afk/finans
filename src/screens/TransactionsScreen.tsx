@@ -6,6 +6,7 @@ import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
 import { Transaction } from '../types';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import i18n from '../i18n';
 
 export const TransactionsScreen = () => {
     const theme = useTheme();
@@ -57,8 +58,8 @@ export const TransactionsScreen = () => {
                             <Icon source={icon} size={24} color={color} />
                         </View>
                         <View style={styles.cardInfo}>
-                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>
-                                {item.category}
+                            <Text variant="titleMedium" style={styles.categoryText}>
+                                {i18n.t(item.category, { defaultValue: item.category })}
                             </Text>
                             {item.description && (
                                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
@@ -84,7 +85,7 @@ export const TransactionsScreen = () => {
         <ScreenWrapper>
             <View style={styles.header}>
                 <Searchbar
-                    placeholder="Ara..."
+                    placeholder={i18n.t('search')}
                     onChangeText={setSearchQuery}
                     value={searchQuery}
                     style={styles.searchBar}
@@ -96,7 +97,7 @@ export const TransactionsScreen = () => {
                         showSelectedOverlay
                         style={styles.chip}
                     >
-                        Tümü
+                        {i18n.t('all')}
                     </Chip>
                     <Chip
                         selected={filterType === 'income'}
@@ -104,7 +105,7 @@ export const TransactionsScreen = () => {
                         showSelectedOverlay
                         style={styles.chip}
                     >
-                        Gelir
+                        {i18n.t('income')}
                     </Chip>
                     <Chip
                         selected={filterType === 'expense'}
@@ -112,7 +113,7 @@ export const TransactionsScreen = () => {
                         showSelectedOverlay
                         style={styles.chip}
                     >
-                        Gider
+                        {i18n.t('expense')}
                     </Chip>
                     <Chip
                         selected={filterType === 'debt'}
@@ -120,7 +121,7 @@ export const TransactionsScreen = () => {
                         showSelectedOverlay
                         style={styles.chip}
                     >
-                        Borç
+                        {i18n.t('debt')}
                     </Chip>
                 </View>
             </View>
@@ -132,7 +133,7 @@ export const TransactionsScreen = () => {
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Text>İşlem bulunamadı.</Text>
+                        <Text>{i18n.t('noTransactionsFound')}</Text>
                     </View>
                 }
             />
@@ -166,6 +167,9 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 12,
         overflow: 'hidden',
+    },
+    categoryText: {
+        fontWeight: 'bold',
     },
     cardContent: {
         padding: 16,

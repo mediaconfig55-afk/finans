@@ -8,6 +8,7 @@ import { Reminder } from '../types';
 import { scheduleReminderNotification, cancelReminderNotifications } from '../utils/notifications';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import i18n from '../i18n';
 
 export const RemindersScreen = () => {
     const theme = useTheme();
@@ -40,7 +41,7 @@ export const RemindersScreen = () => {
 
     const handleAdd = async () => {
         if (!title || !amount || !day) {
-            Alert.alert('Uyarı', 'Lütfen tüm alanları doldurun.');
+            Alert.alert(i18n.t('warning'), i18n.t('fillAllFields'));
             return;
         }
 
@@ -61,25 +62,33 @@ export const RemindersScreen = () => {
                 notificationDate.setHours(reminderTime.getHours());
                 notificationDate.setMinutes(reminderTime.getMinutes());
 
-                await scheduleReminderNotification(newReminder.id, title, parseInt(day), parseFloat(amount));
+                // Schedule notification
+                await scheduleReminderNotification(
+                    newReminder.id,
+                    title,
+                    parseInt(day),
+                    parseFloat(amount),
+                    reminderTime.getHours(),
+                    reminderTime.getMinutes()
+                );
             }
 
             hideDialog();
-            Alert.alert('Başarılı', `Hatırlatıcı eklendi!\n📅 Tarih: ${reminderDate.toLocaleDateString('tr-TR')}\n⏰ Saat: ${reminderTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`);
+            Alert.alert(i18n.t('success'), `${i18n.t('reminderAdded')}\n📅 ${i18n.t('date')}: ${reminderDate.toLocaleDateString('tr-TR')}\n⏰ ${i18n.t('time', { defaultValue: 'Saat' })}: ${reminderTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`);
         } catch (error) {
             console.error('Error adding reminder:', error);
-            Alert.alert('Hata', 'Hatırlatıcı eklenirken bir hata oluştu.');
+            Alert.alert(i18n.t('error'), i18n.t('reminderAddError'));
         }
     };
 
     const handleDelete = async (id: number) => {
         Alert.alert(
-            'Hatırlatıcıyı Sil',
-            'Bu hatırlatıcıyı silmek istediğinizden emin misiniz?',
+            i18n.t('deleteReminderTitle'),
+            i18n.t('deleteReminderMessage'),
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: i18n.t('cancel'), style: 'cancel' },
                 {
-                    text: 'Sil',
+                    text: i18n.t('delete'),
                     style: 'destructive',
                     onPress: async () => {
                         await cancelReminderNotifications(id);
@@ -108,16 +117,16 @@ export const RemindersScreen = () => {
                                 {item.title}
                             </Text>
                             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                Her ayın {item.dayOfMonth}. günü
+                                {i18n.t('everyMonthDay', { day: item.dayOfMonth })}
                             </Text>
                             {isUpcoming && (
                                 <Chip
                                     icon="clock-alert"
                                     style={{ marginTop: 4, alignSelf: 'flex-start' }}
                                     compact
-                                    textStyle={{ fontSize: 11 }}
+                                    textStyle={styles.chipText}
                                 >
-                                    {daysUntil === 0 ? 'Bugün!' : `${daysUntil} gün kaldı`}
+                                    {daysUntil === 0 ? i18n.t('today') : i18n.t('daysLeft', { days: daysUntil })}
                                 </Chip>
                             )}
                         </View>
@@ -138,9 +147,9 @@ export const RemindersScreen = () => {
     return (
         <ScreenWrapper>
             <View style={styles.header}>
-                <Text variant="headlineMedium" style={{ fontWeight: 'bold' }}>Fatura Hatırlatıcıları</Text>
+                <Text variant="headlineMedium" style={styles.headerTitle}>{i18n.t('remindersTitle')}</Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Düzenli ödemelerinizi takip edin
+                    {i18n.t('remindersDesc')}
                 </Text>
             </View>
 
@@ -148,11 +157,11 @@ export const RemindersScreen = () => {
                 {reminders.length === 0 ? (
                     <View style={styles.emptyContainer}>
                         <Icon source="bell-off" size={64} color={theme.colors.onSurfaceVariant} />
-                        <Text variant="bodyLarge" style={{ marginTop: 16, color: theme.colors.onSurfaceVariant }}>
-                            Henüz hatırlatıcı yok
+                        <Text variant="bodyLarge" style={[styles.emptyTitle, { color: theme.colors.onSurfaceVariant }]}>
+                            {i18n.t('noReminders')}
                         </Text>
-                        <Text variant="bodySmall" style={{ marginTop: 8, color: theme.colors.onSurfaceVariant }}>
-                            + butonuna basarak ekleyin
+                        <Text variant="bodySmall" style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                            {i18n.t('addReminderHint')}
                         </Text>
                     </View>
                 ) : (
@@ -162,7 +171,7 @@ export const RemindersScreen = () => {
 
             <FAB
                 icon="plus"
-                label="Yeni Hatırlatıcı"
+                label={i18n.t('newReminder')}
                 style={[styles.fab, { bottom: insets.bottom + 16, backgroundColor: theme.colors.primary }]}
                 color={theme.colors.onPrimary}
                 onPress={showDialog}
@@ -170,17 +179,17 @@ export const RemindersScreen = () => {
 
             <Portal>
                 <Dialog visible={visible} onDismiss={hideDialog}>
-                    <Dialog.Title>Yeni Hatırlatıcı</Dialog.Title>
+                    <Dialog.Title>{i18n.t('newReminder')}</Dialog.Title>
                     <Dialog.Content>
                         <TextInput
-                            label="Başlık (ör: Elektrik Faturası)"
+                            label={i18n.t('reminderTitlePlaceholder')}
                             value={title}
                             onChangeText={setTitle}
                             mode="outlined"
                             style={styles.input}
                         />
                         <TextInput
-                            label="Tutar"
+                            label={i18n.t('amount')}
                             value={amount}
                             onChangeText={setAmount}
                             keyboardType="numeric"
@@ -189,7 +198,7 @@ export const RemindersScreen = () => {
                             left={<TextInput.Icon icon="currency-try" />}
                         />
                         <TextInput
-                            label="Ayın Kaçıncı Günü (1-31)"
+                            label={i18n.t('dayOfMonthPlaceholder')}
                             value={day}
                             onChangeText={setDay}
                             keyboardType="numeric"
@@ -200,7 +209,7 @@ export const RemindersScreen = () => {
                         {/* Tarih Seçici */}
                         <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                             <TextInput
-                                label="Hatırlatma Tarihi"
+                                label={i18n.t('reminderDate')}
                                 value={reminderDate.toLocaleDateString('tr-TR')}
                                 mode="outlined"
                                 style={styles.input}
@@ -212,7 +221,7 @@ export const RemindersScreen = () => {
                         {/* Saat Seçici */}
                         <TouchableOpacity onPress={() => setShowTimePicker(true)}>
                             <TextInput
-                                label="Hatırlatma Saati"
+                                label={i18n.t('reminderTime')}
                                 value={reminderTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                 mode="outlined"
                                 style={styles.input}
@@ -250,8 +259,8 @@ export const RemindersScreen = () => {
                         )}
                     </Dialog.Content>
                     <Dialog.Actions>
-                        <Button onPress={hideDialog}>İptal</Button>
-                        <Button onPress={handleAdd} mode="contained">Ekle</Button>
+                        <Button onPress={hideDialog}>{i18n.t('cancel')}</Button>
+                        <Button onPress={handleAdd} mode="contained">{i18n.t('add')}</Button>
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
@@ -313,5 +322,17 @@ const styles = StyleSheet.create({
     },
     input: {
         marginBottom: 12,
+    },
+    headerTitle: {
+        fontWeight: 'bold',
+    },
+    chipText: {
+        fontSize: 11,
+    },
+    emptyTitle: {
+        marginTop: 16,
+    },
+    emptySubtitle: {
+        marginTop: 8,
     },
 });

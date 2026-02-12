@@ -14,6 +14,17 @@ import {
     TransactionDetailScreen,
     RemindersScreen
 } from '../screens';
+import { Transaction } from '../types';
+
+export type RootStackParamList = {
+    Root: undefined;
+    AddTransaction: undefined;
+    AddDebt: undefined;
+    Settings: undefined;
+    TransactionDetail: { transaction: Transaction };
+    Reminders: undefined;
+    TransactionsTab: undefined; // Accessible via Tab but also via Stack as a screen inside Root
+};
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

@@ -4,6 +4,7 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { List, Switch, useTheme, Divider, ActivityIndicator, Text, Button } from 'react-native-paper';
 import { useStore } from '../store';
 import { exportToExcel } from '../utils/export';
+import i18n from '../i18n';
 
 export const SettingsScreen = () => {
     const theme = useTheme();
@@ -23,18 +24,13 @@ export const SettingsScreen = () => {
             await fetchTransactions();
             await fetchDebts();
 
-            // Get fresh data from store after fetch - using logic inside export function or passing current state
-            // Limitation: actions are async but state update might lag slightly in React 18 automated batching if not careful, 
-            // but useStore state is usually up to date for the next render. 
-            // Better approach: pass the arrays directly from the hook which are "current" as per this render cycle, 
-            // but we just triggered fetch. 
-            // For simplicity, we rely on current state or re-read from repo via store helper if we modified exportToExcel to take store.
-            // Let's pass the props we have.
+            // Get fresh data directly from store state to avoid closure staleness
+            const state = useStore.getState();
+            await exportToExcel(state.transactions, state.debts);
 
-            await exportToExcel(transactions, debts);
-            Alert.alert('Başarılı', 'Veriler başarıyla dışa aktarıldı.');
+            Alert.alert(i18n.t('exportSuccessTitle'), i18n.t('exportSuccessMessage'));
         } catch (error) {
-            Alert.alert('Hata', 'Dışa aktarma sırasında bir hata oluştu.');
+            Alert.alert(i18n.t('exportErrorTitle'), i18n.t('exportErrorMessage'));
         } finally {
             setExporting(false);
         }
@@ -43,42 +39,42 @@ export const SettingsScreen = () => {
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <List.Section>
-                <List.Subheader>Veri Yönetimi</List.Subheader>
-                <View style={{ padding: 16 }}>
+                <List.Subheader>{i18n.t('dataManagement')}</List.Subheader>
+                <View style={styles.sectionPadding}>
                     <Button
                         mode="contained"
                         onPress={handleExport}
                         loading={exporting}
                         icon="microsoft-excel"
                     >
-                        Excel Olarak İndir
+                        {i18n.t('exportExcel')}
                     </Button>
-                    <Text variant="bodySmall" style={{ marginTop: 8, color: theme.colors.outline }}>
-                        Tüm verilerinizi .xlsx formatında dışa aktarın
+                    <Text variant="bodySmall" style={[styles.description, { color: theme.colors.outline }]}>
+                        {i18n.t('exportExcelDesc')}
                     </Text>
                 </View>
             </List.Section>
             <Divider />
 
             <List.Section>
-                <List.Subheader>Genel</List.Subheader>
+                <List.Subheader>{i18n.t('general')}</List.Subheader>
                 <List.Item
-                    title="Karanlık Tema"
-                    description="Koyu renk temasını kullan"
+                    title={i18n.t('darkMode')}
+                    description={i18n.t('darkModeDesc')}
                     left={props => <List.Icon {...props} icon="theme-light-dark" />}
                     right={() => <Switch value={themeMode === 'dark'} onValueChange={(value) => setTheme(value ? 'dark' : 'light')} color={theme.colors.primary} />}
                 />
                 <List.Item
-                    title="Bildirimler"
+                    title={i18n.t('notifications')}
                     left={props => <List.Icon {...props} icon="bell" />}
                     right={() => <Switch value={true} onValueChange={() => { }} disabled />}
                 />
             </List.Section>
 
             <List.Section>
-                <List.Subheader>Uygulama Hakkında</List.Subheader>
+                <List.Subheader>{i18n.t('aboutApp')}</List.Subheader>
                 <List.Item
-                    title="Versiyon"
+                    title={i18n.t('version')}
                     description="1.0.0"
                     left={props => <List.Icon {...props} icon="information" />}
                 />
@@ -86,7 +82,7 @@ export const SettingsScreen = () => {
 
             <View style={styles.footer}>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Finansal Özgürlüğünüz İçin ❤️ ile yapıldı
+                    {i18n.t('footerLove')}
                 </Text>
             </View>
         </View>
@@ -101,5 +97,11 @@ const styles = StyleSheet.create({
         padding: 20,
         alignItems: 'center',
         marginTop: 'auto',
+    },
+    sectionPadding: {
+        padding: 16,
+    },
+    description: {
+        marginTop: 8,
     }
 });

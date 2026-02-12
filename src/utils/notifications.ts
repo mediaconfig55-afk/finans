@@ -38,7 +38,7 @@ export async function registerForPushNotificationsAsync() {
     }
 }
 
-export async function scheduleReminderNotification(reminderId: number, title: string, dayOfMonth: number, amount: number) {
+export async function scheduleReminderNotification(reminderId: number, title: string, dayOfMonth: number, amount: number, hour: number, minute: number) {
     // Cancel existing notifications for this reminder
     try {
         await Notifications.cancelScheduledNotificationAsync(`reminder_${reminderId}`);
@@ -54,7 +54,7 @@ export async function scheduleReminderNotification(reminderId: number, title: st
         const triggerDate = new Date();
         triggerDate.setMonth(now.getMonth() + i);
         triggerDate.setDate(dayOfMonth);
-        triggerDate.setHours(9, 0, 0, 0);
+        triggerDate.setHours(hour, minute, 0, 0);
 
         // Skip if in the past
         if (triggerDate <= now) continue;

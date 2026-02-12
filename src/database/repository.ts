@@ -65,11 +65,12 @@ export const Repository = {
     async addDebt(debt: Omit<Debt, 'id'>) {
         const db = await getDB();
         await db.runAsync(
-            'INSERT INTO debts (type, personName, amount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO debts (type, personName, amount, paidAmount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [
                 debt.type,
                 debt.personName,
                 debt.amount,
+                debt.paidAmount ?? 0,
                 debt.dueDate ?? null,
                 debt.isPaid,
                 debt.description ?? null,
@@ -96,11 +97,12 @@ export const Repository = {
     async updateDebt(debt: Debt) {
         const db = await getDB();
         await db.runAsync(
-            'UPDATE debts SET type = ?, personName = ?, amount = ?, dueDate = ?, isPaid = ?, description = ? WHERE id = ?',
+            'UPDATE debts SET type = ?, personName = ?, amount = ?, paidAmount = ?, dueDate = ?, isPaid = ?, description = ? WHERE id = ?',
             [
                 debt.type,
                 debt.personName,
                 debt.amount,
+                debt.paidAmount,
                 debt.dueDate ?? null,
                 debt.isPaid,
                 debt.description ?? null,
@@ -195,8 +197,8 @@ export const Repository = {
         const db = await getDB();
         for (const d of debts) {
             await db.runAsync(
-                'INSERT INTO debts (type, personName, amount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?)',
-                [d.type, d.personName, d.amount, d.dueDate ?? null, d.isPaid, d.description ?? null]
+                'INSERT INTO debts (type, personName, amount, paidAmount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [d.type, d.personName, d.amount, d.paidAmount ?? 0, d.dueDate ?? null, d.isPaid, d.description ?? null]
             );
         }
     },

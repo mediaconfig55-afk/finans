@@ -9,14 +9,14 @@ import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import i18n from '../i18n';
 
 const schema = z.object({
-    personName: z.string().min(1, 'Kişi/Kurum adı gereklidir'),
+    personName: z.string().min(1, i18n.t('personNameRequired')),
     amount: z.string()
-        .min(1, 'Tutar gereklidir')
+        .min(1, i18n.t('amountRequired'))
         .transform((val) => val.replace(',', '.'))
-        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Geçerli bir tutar giriniz')
-        .transform((val) => parseFloat(val)),
+        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, i18n.t('validAmountRequired')),
     description: z.string().optional(),
 });
 
@@ -57,13 +57,13 @@ export const AddDebtScreen = () => {
                 isPaid: 0,
                 description: data.description,
             });
-            showToast(`${type === 'debt' ? 'Borç' : 'Alacak'} başarıyla eklendi ✓`);
+            showToast(i18n.t('saveSuccess', { type: type === 'debt' ? i18n.t('debt') : i18n.t('receivable') }) + ' ✓');
             setTimeout(() => {
                 navigation.goBack();
             }, 1000);
         } catch (error) {
             console.error(error);
-            Alert.alert('Hata', 'Borç eklenirken bir hata oluştu');
+            Alert.alert(i18n.t('error'), i18n.t('debtAddError'));
         }
     };
 
@@ -71,8 +71,7 @@ export const AddDebtScreen = () => {
         <ScreenWrapper>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={styles.container}>
-
-                    <Text variant="headlineSmall" style={styles.title}>Borç Ekle</Text>
+                    <Text variant="headlineSmall" style={styles.title}>{i18n.t('addDebtAction')}</Text>
 
                     <Controller
                         control={control}
@@ -80,7 +79,7 @@ export const AddDebtScreen = () => {
                         render={({ field: { onChange, value } }) => (
                             <>
                                 <TextInput
-                                    label="Borç Aldığım Kişi/Kurum"
+                                    label={i18n.t('personNameLabel')}
                                     value={value}
                                     onChangeText={onChange}
                                     mode="outlined"
@@ -100,7 +99,7 @@ export const AddDebtScreen = () => {
                         render={({ field: { onChange, value } }) => (
                             <>
                                 <TextInput
-                                    label="Tutar"
+                                    label={i18n.t('amount')}
                                     value={value?.toString()}
                                     onChangeText={onChange}
                                     keyboardType="decimal-pad"
@@ -122,7 +121,7 @@ export const AddDebtScreen = () => {
                         style={styles.input}
                         icon="calendar"
                     >
-                        Vade Tarihi: {formatShortDate(dueDate.toISOString())}
+                        {i18n.t('dueDateLabel', { date: formatShortDate(dueDate.toISOString()) })}
                     </Button>
 
                     {showDatePicker && (
@@ -142,7 +141,7 @@ export const AddDebtScreen = () => {
                         name="description"
                         render={({ field: { onChange, value } }) => (
                             <TextInput
-                                label="Açıklama (Opsiyonel)"
+                                label={i18n.t('descriptionOptional')}
                                 value={value}
                                 onChangeText={onChange}
                                 mode="outlined"
@@ -157,7 +156,7 @@ export const AddDebtScreen = () => {
                         loading={isSubmitting}
                         style={styles.button}
                     >
-                        Kaydet
+                        {i18n.t('save')}
                     </Button>
 
                 </ScrollView>

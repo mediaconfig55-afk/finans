@@ -8,6 +8,7 @@ import { Transaction } from '../types';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { exportToExcel, exportBackup, importBackup } from '../utils/export';
 import { Repository } from '../database/repository';
+import i18n from '../i18n';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -35,9 +36,9 @@ export const StatsScreen = () => {
         setLoading(true);
         try {
             await exportToExcel(transactions, debts);
-            showToast('Excel dosyası başarıyla oluşturuldu ✓');
+            showToast(i18n.t('exportSuccessMessage') + ' ✓');
         } catch (error) {
-            Alert.alert('Hata', 'Excel dosyası oluşturulurken bir hata oluştu.');
+            Alert.alert(i18n.t('exportErrorTitle'), i18n.t('exportErrorMessage'));
         } finally {
             setLoading(false);
         }
@@ -47,9 +48,9 @@ export const StatsScreen = () => {
         setLoading(true);
         try {
             await exportBackup(transactions, debts, reminders);
-            showToast('Yedek başarıyla oluşturuldu ✓');
+            showToast(i18n.t('backupSuccess'));
         } catch (error) {
-            Alert.alert('Hata', 'Yedek oluşturulurken bir hata oluştu.');
+            Alert.alert(i18n.t('error'), 'Yedek oluşturulurken bir hata oluştu.');
         } finally {
             setLoading(false);
         }
@@ -57,12 +58,12 @@ export const StatsScreen = () => {
 
     const handleRestore = async () => {
         Alert.alert(
-            'Veri Geri Yükleme',
-            'Mevcut tüm veriler silinip yedek dosyasındaki veriler yüklenecek. Devam etmek istiyor musunuz?',
+            i18n.t('restoreConfirmTitle'),
+            i18n.t('restoreConfirmMessage'),
             [
-                { text: 'İptal', style: 'cancel' },
+                { text: i18n.t('cancel'), style: 'cancel' },
                 {
-                    text: 'Devam Et',
+                    text: i18n.t('continue'),
                     style: 'destructive',
                     onPress: async () => {
                         setLoading(true);
@@ -87,9 +88,9 @@ export const StatsScreen = () => {
                             await fetchDebts();
                             await fetchReminders();
 
-                            showToast('Veriler başarıyla geri yüklendi ✓');
+                            showToast(i18n.t('restoreSuccess'));
                         } catch (error) {
-                            Alert.alert('Hata', error instanceof Error ? error.message : 'Veriler geri yüklenirken bir hata oluştu.');
+                            Alert.alert(i18n.t('error'), error instanceof Error ? error.message : 'Veriler geri yüklenirken bir hata oluştu.');
                         } finally {
                             setLoading(false);
                         }
@@ -118,6 +119,8 @@ export const StatsScreen = () => {
     // Group by "Month-Year" -> { income: 0, expense: 0 }
     const monthlyData = transactions.reduce((acc, curr: Transaction) => { // Added type for curr
         const date = new Date(curr.date);
+        if (isNaN(date.getTime())) return acc; // Geçersiz tarihleri atla
+
         const key = `${date.getMonth() + 1}-${date.getFullYear()}`; // "2-2024"
         if (!acc[key]) acc[key] = { income: 0, expense: 0, label: `${date.toLocaleString('tr-TR', { month: 'short' })}` };
 
@@ -168,9 +171,9 @@ export const StatsScreen = () => {
     const renderLegend = () => {
         return pieData.map((item, index) => (
             <View key={index} style={styles.legendItem}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.legendRow}>
                     <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-                    <Text style={styles.legendText}>{item.category}</Text>
+                    <Text>{i18n.t(item.category)}</Text>
                 </View>
                 <Text style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{formatCurrency(item.amount)}</Text>
             </View>
@@ -180,15 +183,15 @@ export const StatsScreen = () => {
     return (
         <ScreenWrapper>
             <ScrollView contentContainerStyle={styles.content}>
-                <Text variant="headlineSmall" style={styles.title}>Analiz</Text>
+                <Text variant="headlineSmall" style={styles.title}>{i18n.t('analysis')}</Text>
 
                 <SegmentedButtons
                     value={chartMode}
-                    onValueChange={(val: 'category' | 'monthly' | 'daily') => setChartMode(val)} // Added type for val
+                    onValueChange={(val: 'category' | 'monthly' | 'daily') => setChartMode(val)}
                     buttons={[
-                        { value: 'category', label: 'Kategori' },
-                        { value: 'monthly', label: 'Aylık' },
-                        { value: 'daily', label: 'Günlük' },
+                        { value: 'category', label: i18n.t('category') },
+                        { value: 'monthly', label: i18n.t('monthly') },
+                        { value: 'daily', label: i18n.t('daily') },
                     ]}
                     style={styles.segment}
                 />
@@ -197,12 +200,12 @@ export const StatsScreen = () => {
                     <>
                         <SegmentedButtons
                             value={selectedType}
-                            onValueChange={(val: 'expense' | 'income') => setSelectedType(val)} // Added type for val
+                            onValueChange={(val: 'expense' | 'income') => setSelectedType(val)}
                             buttons={[
-                                { value: 'expense', label: 'Giderler', icon: 'arrow-down', showSelectedCheck: true },
-                                { value: 'income', label: 'Gelirler', icon: 'arrow-up', showSelectedCheck: true },
+                                { value: 'expense', label: i18n.t('expenses'), icon: 'arrow-down', showSelectedCheck: true },
+                                { value: 'income', label: i18n.t('incomes'), icon: 'arrow-up', showSelectedCheck: true },
                             ]}
-                            style={{ marginBottom: 20, width: '80%', alignSelf: 'center' }}
+                            style={styles.typeSegment}
                             density="small"
                         />
 
@@ -226,7 +229,7 @@ export const StatsScreen = () => {
                             </View>
                         ) : (
                             <View style={styles.emptyContainer}>
-                                <Text>Veri bulunamadı.</Text>
+                                <Text>{i18n.t('noData')}</Text>
                             </View>
                         )}
                     </>
@@ -248,22 +251,22 @@ export const StatsScreen = () => {
                                 width={screenWidth - 60}
                             />
                         ) : (
-                            <Text>Veri bulunamadı.</Text>
+                            <Text>{i18n.t('noData')}</Text>
                         )}
-                        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, gap: 20 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <View style={{ width: 12, height: 12, backgroundColor: (theme.colors as any).customIncome, marginRight: 8, borderRadius: 6 }} />
-                                <Text>Gelir</Text>
+                        <View style={styles.chartLegendContainer}>
+                            <View style={styles.chartLegendItem}>
+                                <View style={[styles.chartLegendDot, { backgroundColor: (theme.colors as any).customIncome }]} />
+                                <Text>{i18n.t('income')}</Text>
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <View style={{ width: 12, height: 12, backgroundColor: (theme.colors as any).customExpense, marginRight: 8, borderRadius: 6 }} />
-                                <Text>Gider</Text>
+                            <View style={styles.chartLegendItem}>
+                                <View style={[styles.chartLegendDot, { backgroundColor: (theme.colors as any).customExpense }]} />
+                                <Text>{i18n.t('expense')}</Text>
                             </View>
                         </View>
                     </View>
                 ) : (
                     <View style={styles.chartContainer}>
-                        <Text variant="titleMedium" style={{ marginBottom: 10 }}>Son 30 Günlük Harcamalar</Text>
+                        <Text variant="titleMedium" style={styles.marginBottom10}>{i18n.t('last30Days')}</Text>
                         {dailyBarData.length > 0 ? (
                             <BarChart
                                 data={dailyBarData}
@@ -281,15 +284,15 @@ export const StatsScreen = () => {
                                 isAnimated
                             />
                         ) : (
-                            <Text>Veri bulunamadı.</Text>
+                            <Text>{i18n.t('noData')}</Text>
                         )}
                     </View>
                 )}
 
                 {/* Veri Yönetimi Bölümü */}
                 <Divider style={{ marginVertical: 24 }} />
-                <Text variant="titleLarge" style={{ fontWeight: 'bold', marginBottom: 16 }}>
-                    Veri Yönetimi
+                <Text variant="titleLarge" style={styles.dataTitle}>
+                    {i18n.t('dataManagement')}
                 </Text>
                 <View style={styles.dataManagementContainer}>
                     <Button
@@ -298,12 +301,12 @@ export const StatsScreen = () => {
                         onPress={handleBackup}
                         loading={loading}
                         style={styles.dataButton}
-                        contentStyle={{ paddingVertical: 8 }}
+                        contentStyle={styles.buttonContent}
                     >
-                        Yedek Oluştur (JSON)
+                        {i18n.t('createBackup')}
                     </Button>
-                    <Text variant="bodySmall" style={{ color: theme.colors.outline, marginBottom: 16 }}>
-                        Tüm verilerinizi JSON formatında dışa aktarın
+                    <Text variant="bodySmall" style={[styles.description, { color: theme.colors.outline }]}>
+                        {i18n.t('createBackupDesc')}
                     </Text>
 
                     <Button
@@ -312,12 +315,12 @@ export const StatsScreen = () => {
                         onPress={handleRestore}
                         loading={loading}
                         style={styles.dataButton}
-                        contentStyle={{ paddingVertical: 8 }}
+                        contentStyle={styles.buttonContent}
                     >
-                        Yedek Geri Yükle
+                        {i18n.t('restoreBackup')}
                     </Button>
-                    <Text variant="bodySmall" style={{ color: theme.colors.outline, marginBottom: 16 }}>
-                        JSON dosyasından verilerinizi içe aktarın
+                    <Text variant="bodySmall" style={[styles.description, { color: theme.colors.outline }]}>
+                        {i18n.t('restoreBackupDesc')}
                     </Text>
 
                     <Button
@@ -326,12 +329,12 @@ export const StatsScreen = () => {
                         onPress={handleExcelExport}
                         loading={loading}
                         style={styles.dataButton}
-                        contentStyle={{ paddingVertical: 8 }}
+                        contentStyle={styles.buttonContent}
                     >
-                        Excel Olarak İndir
+                        {i18n.t('exportExcel')}
                     </Button>
                     <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-                        Verilerinizi .xlsx formatında görüntüleyin
+                        {i18n.t('exportExcelDesc')}
                     </Text>
                 </View>
             </ScrollView>
@@ -393,17 +396,53 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         marginRight: 8,
     },
-    legendText: {
-        // flex: 1,
+    legendRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    typeSegment: {
+        marginBottom: 20,
+        width: '80%',
+        alignSelf: 'center',
+    },
+    chartLegendContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 20,
+        gap: 20,
+    },
+    chartLegendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    chartLegendDot: {
+        width: 12,
+        height: 12,
+        marginRight: 8,
+        borderRadius: 6,
+    },
+    marginBottom10: {
+        marginBottom: 10,
+    },
+    dataTitle: {
+        fontWeight: 'bold',
+        marginBottom: 16,
+    },
+    buttonContent: {
+        paddingVertical: 8,
+    },
+    description: {
+        marginBottom: 16,
+    },
+    dataButton: {
+        marginBottom: 8,
     },
     emptyContainer: {
         alignItems: 'center',
         marginTop: 50,
+        padding: 20,
     },
     dataManagementContainer: {
         marginBottom: 32,
     },
-    dataButton: {
-        marginBottom: 8,
-    }
 });

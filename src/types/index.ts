@@ -26,6 +26,7 @@ export interface Debt {
   personName: string;
   amount: number;
   dueDate?: string; // ISO 8601
+  paidAmount: number;
   isPaid: number; // 0 or 1 for SQLite boolean
   description?: string;
 }
