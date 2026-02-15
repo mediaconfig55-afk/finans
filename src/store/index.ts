@@ -30,7 +30,7 @@ interface AppState {
 
     reminders: Reminder[];
     fetchReminders: () => Promise<void>;
-    addReminder: (r: Omit<Reminder, 'id'>) => Promise<void>;
+    addReminder: (r: Omit<Reminder, 'id'>) => Promise<number>;
     deleteReminder: (id: number) => Promise<void>;
 
     setTheme: (theme: 'light' | 'dark') => void;
@@ -137,9 +137,10 @@ export const useStore = create<AppState>((set, get) => ({
     },
 
     addReminder: async (r) => {
-        await Repository.addReminder(r);
+        const id = await Repository.addReminder(r);
         await get().fetchReminders();
         get().refreshDashboard();
+        return id;
     },
 
     deleteReminder: async (id) => {

@@ -2,9 +2,12 @@ import React, { useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, useTheme, FAB, List, Divider, IconButton, Surface, Avatar, Button, Icon } from 'react-native-paper';
 import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SummaryCard } from '../components/SummaryCard';
+import { TransactionCard } from '../components/TransactionCard';
+import { PremiumBalanceCard } from '../components/PremiumBalanceCard';
+import { GlassyCard } from '../components/GlassyCard';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
 import i18n from '../i18n';
@@ -13,7 +16,12 @@ import { RootStackParamList } from '../navigation';
 export const DashboardScreen = () => {
     const theme = useTheme();
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-    const { kpi, transactions, refreshDashboard, loading, dailySpending, reminders, fetchReminders } = useStore();
+    const { kpi, transactions, refreshDashboard, loading, dailySpending, reminders, fetchReminders, userName } = useStore();
+    const insets = useSafeAreaInsets();
+
+    const totalBalance = kpi.totalIncome - kpi.totalExpense;
+    const today = new Date().toISOString().split('T')[0];
+    const todaysSpendingAmount = dailySpending.find(d => d.date === today)?.total || 0;
 
     useFocusEffect(
         useCallback(() => {
@@ -22,16 +30,15 @@ export const DashboardScreen = () => {
         }, [])
     );
 
-    const balance = kpi.totalIncome - kpi.totalExpense;
-
-    // Calculate today's spending
-    const today = new Date().toISOString().split('T')[0];
-    const todaysSpending = dailySpending.find(d => d.date === today)?.total || 0;
-
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.container, { backgroundColor: '#000000', paddingTop: insets.top }]}>
+            <LinearGradient
+                colors={['#000000', '#121212']}
+                style={StyleSheet.absoluteFill}
+            />
+
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]} // Increased padding for floating dock
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={refreshDashboard} />
                 }
@@ -39,10 +46,8 @@ export const DashboardScreen = () => {
                 {/* Header Section */}
                 <View style={styles.header}>
                     <View style={styles.headerContent}>
-                        <Avatar.Image size={48} source={require('../../assets/icon.png')} style={styles.avatar} />
                         <View style={styles.headerTextContainer}>
-                            <Text variant="titleMedium" style={styles.welcomeText}>{i18n.t('welcome')}</Text>
-                            <Text variant="headlineSmall" style={styles.brandText}>FİNANSIM</Text>
+                            <Text variant="headlineSmall" style={styles.brandText}>{i18n.t('welcome')} {userName}</Text>
                         </View>
                     </View>
                     <IconButton
@@ -53,23 +58,32 @@ export const DashboardScreen = () => {
                     />
                 </View>
 
-                {/* Reminders Widget - Glassmorphism */}
-                <LinearGradient
-                    colors={['rgba(101, 31, 255, 0.15)', 'rgba(101, 31, 255, 0.05)']}
-                    style={styles.widgetGradient}
-                >
-                    <View style={styles.widgetHeader}>
-                        <View style={styles.widgetTitleContainer}>
-                            <Icon source="bell-ring" size={24} color={theme.colors.secondary} />
-                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{i18n.t('upcomingPayments')}</Text>
-                        </View>
-                        <Button mode="text" textColor={theme.colors.secondary} onPress={() => navigation.navigate('Reminders')}>{i18n.t('viewAll')}</Button>
-                    </View>
+                {/* Premium Balance Card */}
+                <View style={styles.balanceRow}>
+                    <PremiumBalanceCard
+                        balance={totalBalance}
+                        income={kpi.totalIncome}
+                        expense={kpi.totalExpense}
+                        userName={userName}
+                    />
+                </View>
 
-                    {reminders.slice(0, 2).length === 0 ? (
-                        <Text style={styles.noRemindersText}>{i18n.t('noUpcomingPayments')}</Text>
-                    ) : (
-                        reminders.slice(0, 2).map((item) => (
+                {/* Reminders Widget - Glassmorphism */}
+                {reminders.length > 0 && (
+                    <GlassyCard
+                        style={styles.widgetGradient}
+                        intensity={0.1}
+                        gradientColors={['rgba(101, 31, 255, 0.15)', 'rgba(101, 31, 255, 0.05)']}
+                    >
+                        <View style={styles.widgetHeader}>
+                            <View style={styles.widgetTitleContainer}>
+                                <Icon source="bell-ring" size={24} color={theme.colors.secondary} />
+                                <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{i18n.t('upcomingPayments')}</Text>
+                            </View>
+                            <Button mode="text" textColor={theme.colors.secondary} onPress={() => navigation.navigate('Reminders')}>{i18n.t('viewAll')}</Button>
+                        </View>
+
+                        {reminders.slice(0, 2).map((item) => (
                             <View key={item.id} style={styles.reminderItem}>
                                 <View style={styles.reminderDate}>
                                     <Text style={styles.reminderDayText}>{item.dayOfMonth}</Text>
@@ -81,39 +95,15 @@ export const DashboardScreen = () => {
                                 </View>
                                 <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>{formatCurrency(item.amount)}</Text>
                             </View>
-                        ))
-                    )}
-                </LinearGradient>
-
-                {/* Summary Cards */}
-                <View style={styles.summaryRow}>
-                    <SummaryCard
-                        title={i18n.t('income')}
-                        amount={kpi.totalIncome}
-                        type="income"
-                        icon="arrow-up-circle"
-                    />
-                    <SummaryCard
-                        title={i18n.t('expense')}
-                        amount={kpi.totalExpense}
-                        type="expense"
-                        icon="arrow-down-circle"
-                    />
-                </View>
-                <View style={styles.balanceRow}>
-                    <SummaryCard
-                        title={i18n.t('netBalance')}
-                        amount={balance}
-                        type="balance"
-                        icon="wallet"
-                    />
-                </View>
+                        ))}
+                    </GlassyCard>
+                )}
 
                 {/* Daily Spending Widget */}
                 <View style={styles.summaryRow}>
                     <SummaryCard
                         title={i18n.t('todaysSpending')}
-                        amount={todaysSpending}
+                        amount={todaysSpendingAmount}
                         type="expense"
                         icon="calendar-today"
                     />
@@ -131,19 +121,14 @@ export const DashboardScreen = () => {
                     </Text>
                 </View>
 
-                <Surface style={[styles.listContainer, { backgroundColor: theme.colors.elevation.level1 }]} elevation={1}>
+                {/* List Container */}
+                <View style={styles.listContainer}>
                     {transactions.slice(0, 5).map((item, index) => (
                         <React.Fragment key={item.id}>
-                            <List.Item
-                                title={i18n.t(item.category)}
-                                description={item.description || formatShortDate(item.date)}
-                                titleStyle={{ fontWeight: 'bold', color: theme.colors.onSurface }}
-                                descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+                            <TransactionCard
+                                item={item}
                                 onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
-                                left={props => <View style={{ justifyContent: 'center', marginLeft: 10 }}><Icon source={item.type === 'income' ? 'arrow-up' : 'arrow-down'} size={24} color={item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense} /></View>}
-                                right={() => <Text style={{ alignSelf: 'center', color: item.type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold', marginRight: 10 }}>{item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}</Text>}
                             />
-                            {index < 4 && <Divider />}
                         </React.Fragment>
                     ))}
                     {transactions.length === 0 && (
@@ -151,13 +136,16 @@ export const DashboardScreen = () => {
                             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>{i18n.t('noTransactionsYet')}</Text>
                         </View>
                     )}
-                </Surface>
+                </View>
 
             </ScrollView>
 
             <FAB
                 icon="plus"
-                style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+                style={[styles.fab, {
+                    backgroundColor: theme.colors.primary,
+                    bottom: (insets.bottom || 16) + 85 // Sit just above the floating oval tab bar (approx 20 + 60 + 5)
+                }]}
                 color={theme.colors.onPrimary}
                 onPress={() => navigation.navigate('AddTransaction' as never)}
             />
@@ -165,13 +153,14 @@ export const DashboardScreen = () => {
     );
 };
 
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
     scrollContent: {
         padding: 16,
-        paddingBottom: 80,
+        paddingBottom: 140, // Enough space for Floating Tab Bar
     },
     header: {
         marginBottom: 20,

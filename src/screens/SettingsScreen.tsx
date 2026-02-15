@@ -24,13 +24,23 @@ export const SettingsScreen = () => {
     const handleExport = async () => {
         setExporting(true);
         try {
-            // Ensure we have latest data
-            await fetchTransactions();
-            await fetchDebts();
+            // Ensure we have latest data for everything
+            const state = useStore.getState();
+            await Promise.all([
+                state.fetchTransactions(),
+                state.fetchDebts(),
+                state.fetchReminders(),
+                state.fetchInstallments()
+            ]);
 
             // Get fresh data directly from store state to avoid closure staleness
-            const state = useStore.getState();
-            await exportToExcel(state.transactions, state.debts);
+            const latestState = useStore.getState();
+            await exportToExcel(
+                latestState.transactions,
+                latestState.debts,
+                latestState.reminders,
+                latestState.installments
+            );
 
             showToast(i18n.t('exportSuccessMessage'), 'success');
         } catch (error: any) {
@@ -70,7 +80,16 @@ export const SettingsScreen = () => {
                         onPress={async () => {
                             try {
                                 const state = useStore.getState();
-                                await import('../utils/export').then(m => m.exportBackup(state.transactions, state.debts, state.reminders));
+                                // Ensure we have installments loaded
+                                await state.fetchInstallments();
+                                const latestState = useStore.getState(); // Re-get state after fetch
+
+                                await import('../utils/export').then(m => m.exportBackup(
+                                    latestState.transactions,
+                                    latestState.debts,
+                                    latestState.reminders,
+                                    latestState.installments
+                                ));
                                 showToast(i18n.t('backupSuccess'), 'success');
                             } catch (error: any) {
                                 showToast(error.message || 'Yedek oluşturma hatası', 'error');
@@ -89,16 +108,49 @@ export const SettingsScreen = () => {
                                 const m = await import('../utils/export');
                                 const data = await m.importBackup();
                                 if (data) {
-                                    const { Repository } = require('../database/repository');
-                                    await Repository.clearAllData();
-                                    await Repository.bulkInsertTransactions(data.transactions);
-                                    await Repository.bulkInsertDebts(data.debts);
-                                    await Repository.bulkInsertReminders(data.reminders);
-                                    useStore.getState().refreshDashboard();
-                                    showToast(i18n.t('restoreSuccess'), 'success');
+                                    Alert.alert(
+                                        i18n.t('restoreBackup'),
+                                        i18n.t('restoreConfirm'),
+                                        [
+                                            { text: i18n.t('cancel'), style: 'cancel' },
+                                            {
+                                                text: i18n.t('yes'),
+                                                onPress: async () => {
+                                                    try {
+                                                        const repoModule = require('../database/repository');
+                                                        const Repo = repoModule.Repository;
+
+                                                        if (!Repo) {
+                                                            throw new Error('Repository module not found');
+                                                        }
+
+                                                        await Repo.clearAllData();
+                                                        if (data.installments && data.installments.length > 0) {
+                                                            await Repo.bulkInsertInstallments(data.installments);
+                                                        }
+                                                        await Repo.bulkInsertTransactions(data.transactions);
+                                                        await Repo.bulkInsertDebts(data.debts);
+                                                        await Repo.bulkInsertReminders(data.reminders);
+
+                                                        try {
+                                                            useStore.getState().refreshDashboard();
+                                                        } catch (refreshErr) {
+                                                            console.warn("Refresh failed but import likely worked:", refreshErr);
+                                                        }
+
+                                                        showToast(i18n.t('restoreSuccess'), 'success');
+                                                    } catch (dbError: any) {
+                                                        console.error("Database Restore Error:", dbError);
+                                                        showToast('Veri yüklenirken hata: ' + (dbError.message || dbError), 'error');
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    );
                                 }
                             } catch (error: any) {
-                                showToast(error.message || 'Geri yükleme hatası', 'error');
+                                console.error("Import Flow Error:", error);
+                                Alert.alert("Hata", error.message || 'Geri yükleme başarısız.');
                             }
                         }}
                         icon="database-import"
@@ -107,7 +159,7 @@ export const SettingsScreen = () => {
                         {i18n.t('restoreBackup')}
                     </Button>
                 </View>
-            </List.Section>
+            </List.Section >
             <Divider />
 
             <List.Section>
@@ -139,7 +191,7 @@ export const SettingsScreen = () => {
                     {i18n.t('footerLove')}
                 </Text>
             </View>
-        </View>
+        </View >
     );
 };
 

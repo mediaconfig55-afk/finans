@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, Dimensions, TouchableOpacity, Alert, Linking, Platform } from 'react-native';
 import { Text, Button, useTheme, Portal, Dialog, TextInput, Icon } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -70,24 +70,30 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
     };
 
     const handlePermissionGrant = async () => {
-        setShowPermissionDialog(false);
         try {
-            await registerForPushNotificationsAsync();
-            // Teşekkür mesajı göster
-            setShowThankYou(true);
-            setTimeout(() => {
-                setShowThankYou(false);
-                setShowNameDialog(true);
-            }, 2000);
+            const granted = await registerForPushNotificationsAsync();
+            if (granted) {
+                setShowPermissionDialog(false);
+                // Teşekkür mesajı göster
+                setShowThankYou(true);
+                setTimeout(() => {
+                    setShowThankYou(false);
+                    setShowNameDialog(true);
+                }, 2000);
+            } else {
+                // İzin verilmedi, uyarı göster
+                Alert.alert(
+                    "İzin Gerekli",
+                    "Bildirim izni vermeden devam edemezsiniz. Lütfen ayarlardan izin verin.",
+                    [
+                        { text: "Ayarlara Git", onPress: () => Linking.openSettings() },
+                        { text: "Tekrar Dene", onPress: () => handlePermissionGrant() }
+                    ]
+                );
+            }
         } catch (error) {
-            // İzin verilmese bile devam et
-            setShowNameDialog(true);
+            Alert.alert("Hata", "Bir sorun oluştu. Lütfen tekrar deneyin.");
         }
-    };
-
-    const handlePermissionSkip = () => {
-        setShowPermissionDialog(false);
-        setShowNameDialog(true);
     };
 
     const handleStartApp = async () => {
@@ -188,14 +194,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             <Portal>
                 <Dialog visible={showPermissionDialog} dismissable={false}>
                     <Dialog.Icon icon="bell-ring" size={60} />
-                    <Dialog.Title style={{ textAlign: 'center' }}>Bildirim İzni</Dialog.Title>
+                    <Dialog.Title style={{ textAlign: 'center' }}>Bildirim İzni Gerekli ⚠️</Dialog.Title>
                     <Dialog.Content>
                         <Text style={{ textAlign: 'center' }}>
-                            Fatura hatırlatıcıları için bildirim iznine ihtiyacımız var.
+                            Uygulamanın düzgün çalışabilmesi ve fatura hatırlatıcılarını zamanında alabilmeniz için bildirim izni vermeniz <Text style={{ fontWeight: 'bold' }}>zorunludur</Text>.
                         </Text>
                     </Dialog.Content>
                     <Dialog.Actions>
-                        <Button onPress={handlePermissionSkip}>Daha Sonra</Button>
                         <Button mode="contained" onPress={handlePermissionGrant}>İzin Ver</Button>
                     </Dialog.Actions>
                 </Dialog>

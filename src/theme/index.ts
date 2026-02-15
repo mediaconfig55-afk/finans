@@ -26,27 +26,35 @@ export const AppLightTheme = {
 
 export const AppDarkTheme = {
     ...MD3DarkTheme,
+    roundness: 24, // High roundness for buttons/cards
     colors: {
         ...MD3DarkTheme.colors,
-        primary: '#00E676', // Neon Green
-        onPrimary: '#000000',
-        secondary: '#651FFF', // Deep Purple
-        tertiary: '#2979FF', // Blue Accent
-        background: '#0A0E17', // Deep Dark Blue/Black
-        surface: '#111625', // Slightly lighter dark
-        surfaceVariant: '#1F293A',
+        primary: '#FF6B00', // Vibrant Orange (Fitness Style)
+        onPrimary: '#FFFFFF',
+        primaryContainer: '#331B00',
+        onPrimaryContainer: '#FFD1B3',
+        secondary: '#FFFFFF', // High contrast white for headers
+        onSecondary: '#000000',
+        tertiary: '#FF6B00', // Warning/Action
+        background: '#000000', // Pure Black
+        surface: '#1C1C1E', // Matte Dark Grey (Card Background)
+        surfaceVariant: '#2C2C2E', // Slightly lighter for inputs/borders
         error: '#CF6679',
         onSurface: '#FFFFFF',
-        onSurfaceVariant: '#B0BEC5',
-        customIncome: '#00E676', // Matching Primary
-        customExpense: '#FF1744', // Bright Red
+        onSurfaceVariant: '#8E8E93', // Subtext Grey
+        outline: '#2C2C2E',
+        customIncome: '#34C759', // Apple Green
+        customExpense: '#FF3B30', // Apple Red
         elevation: {
             level0: 'transparent',
-            level1: '#111625',
-            level2: '#1F293A',
-            level3: '#2C3A50',
-            level4: '#394B66',
-            level5: '#455C7C',
+            level1: '#1C1C1E',
+            level2: '#2C2C2E',
+            level3: '#3A3A3C',
+            level4: '#48484A',
+            level5: '#636366',
         }
+    },
+    animation: {
+        scale: 1.0,
     },
 };

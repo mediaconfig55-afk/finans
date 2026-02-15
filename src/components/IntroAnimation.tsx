@@ -101,7 +101,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({ onFinish }) => {
         <View style={styles.container}>
             <Animated.View style={[StyleSheet.absoluteFill, animatedGradientStyle]}>
                 <LinearGradient
-                    colors={['#1a1a2e', '#16213e', '#0f3460']}
+                    colors={['#000000', '#1C1C1E', '#331B00']}
                     style={StyleSheet.absoluteFill}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -120,7 +120,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({ onFinish }) => {
 
             <Animated.View style={[styles.textContainer, animatedTextStyle]}>
                 <Text style={styles.appName}>FİNANSIM</Text>
-                <Text style={styles.tagline}>Finansal Özgürlüğünüz</Text>
+                <Text style={styles.tagline}>Premium Finans Takibi</Text>
             </Animated.View>
         </View>
     );
@@ -131,21 +131,21 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#000000',
     },
     circle: {
         position: 'absolute',
         width: width * 1.5,
         height: width * 1.5,
         borderRadius: (width * 1.5) / 2,
-        backgroundColor: 'rgba(15, 52, 96, 0.3)',
+        backgroundColor: 'rgba(255, 107, 0, 0.05)', // Orange faint glow
     },
     circleInner: {
         width: '100%',
         height: '100%',
         borderRadius: (width * 1.5) / 2,
         borderWidth: 2,
-        borderColor: 'rgba(0, 173, 181, 0.2)',
+        borderColor: 'rgba(255, 107, 0, 0.1)',
     },
     logoContainer: {
         marginBottom: 40,
@@ -154,21 +154,21 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: 60,
-        backgroundColor: 'rgba(0, 173, 181, 0.2)',
+        backgroundColor: '#1C1C1E', // Matte Dark
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#00ADB5',
-        shadowColor: '#00ADB5',
+        borderWidth: 2,
+        borderColor: '#FF6B00', // Orange border
+        shadowColor: '#FF6B00',
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 20,
+        shadowOpacity: 0.5,
+        shadowRadius: 25,
         elevation: 10,
     },
     logoText: {
         fontSize: 64,
         fontWeight: 'bold',
-        color: '#00ADB5',
+        color: '#FF6B00', // Orange text
     },
     textContainer: {
         alignItems: 'center',
@@ -176,14 +176,15 @@ const styles = StyleSheet.create({
     appName: {
         fontSize: 36,
         fontWeight: 'bold',
-        color: '#EEEEEE',
+        color: '#FFFFFF',
         letterSpacing: 2,
         marginBottom: 8,
     },
     tagline: {
-        fontSize: 16,
-        color: '#00ADB5',
+        fontSize: 14,
+        color: '#FF6B00',
         letterSpacing: 1,
-        opacity: 0.9,
+        opacity: 0.8,
+        textTransform: 'uppercase',
     },
 });

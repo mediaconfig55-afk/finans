@@ -1,11 +1,12 @@
 import './src/i18n'; // Initialize i18n
 import React, { useEffect, useState, useCallback } from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
+import * as NavigationBar from 'expo-navigation-bar';
 import { AppLightTheme, AppDarkTheme } from './src/theme';
 import { initDatabase } from './src/database/db';
 import Navigation from './src/navigation';
@@ -31,6 +32,11 @@ export default function App() {
     async function prepare() {
       try {
         await initDatabase();
+
+        if (Platform.OS === 'android') {
+          await NavigationBar.setPositionAsync('absolute');
+          await NavigationBar.setBackgroundColorAsync('transparent');
+        }
 
         // Check if onboarding is completed
         const [onboardingComplete, userName] = await Promise.all([

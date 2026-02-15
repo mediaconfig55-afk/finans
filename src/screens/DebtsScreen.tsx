@@ -153,9 +153,12 @@ export const DebtsScreen = () => {
             <FAB
                 icon="plus"
                 label={i18n.t('addDebtAction')}
-                style={[styles.fab, { bottom: insets.bottom + 16, backgroundColor: theme.colors.primary }]}
+                style={[styles.fab, {
+                    bottom: (insets.bottom || 16) + 85, // Sit just above tab bar
+                    backgroundColor: theme.colors.primary
+                }]}
                 color={theme.colors.onPrimary}
-                onPress={() => navigation.navigate('AddDebt')}
+                onPress={() => navigation.navigate('AddDebt' as never)}
             />
 
             <Portal>
@@ -193,7 +196,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 100,
+        paddingBottom: 140, // Increased for Floating Tab Bar
     },
     card: {
         marginBottom: 12,

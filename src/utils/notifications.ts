@@ -19,7 +19,9 @@ export async function registerForPushNotificationsAsync() {
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
             lightColor: '#FF231F7C',
-            sound: 'default'
+            sound: 'default',
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC, // Show on lockscreen
+            bypassDnd: true, // Try to bypass Do Not Disturb (requires extra permission, but good intent)
         });
     }
 
@@ -33,10 +35,12 @@ export async function registerForPushNotificationsAsync() {
         }
 
         if (finalStatus !== 'granted') {
-            console.log('Permission not granted!');
-            return;
+            console.warn('Permission not granted!');
+            return false;
         }
+        return true;
     }
+    return false;
 }
 
 export async function scheduleReminderNotification(reminderId: number, title: string, amount: number, notificationDate: Date) {

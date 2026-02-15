@@ -46,7 +46,7 @@ export default {
     noUpcomingPayments: 'Yaklaşan ödeme yok.',
     day: 'GÜN',
     everyMonthDay: 'Her ayın %{day}. günü',
-    netBalance: 'Net Bakiye',
+    netBalance: 'Elimdeki Para',
     todaysSpending: 'Bugünkü Harcama',
     recentTransactions: 'Son İşlemler',
     seeAll: 'Tümünü Gör',

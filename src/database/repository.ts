@@ -159,10 +159,11 @@ export const Repository = {
 
     async addReminder(reminder: Omit<Reminder, 'id'>) {
         const db = await getDB();
-        await db.runAsync(
+        const result = await db.runAsync(
             'INSERT INTO reminders (title, amount, dayOfMonth, type) VALUES (?, ?, ?, ?)',
             [reminder.title, reminder.amount, reminder.dayOfMonth, reminder.type]
         );
+        return result.lastInsertRowId;
     },
 
     async getReminders() {
@@ -184,32 +185,42 @@ export const Repository = {
         await db.runAsync('DELETE FROM installments');
     },
 
-    async bulkInsertTransactions(transactions: Omit<Transaction, 'id'>[]) {
+    async bulkInsertTransactions(transactions: Transaction[]) {
         const db = await getDB();
         for (const t of transactions) {
             await db.runAsync(
-                'INSERT INTO transactions (type, amount, category, date, description, installmentId) VALUES (?, ?, ?, ?, ?, ?)',
-                [t.type, t.amount, t.category, t.date, t.description ?? null, t.installmentId ?? null]
+                'INSERT INTO transactions (id, type, amount, category, date, description, installmentId) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [t.id, t.type, t.amount, t.category, t.date, t.description ?? null, t.installmentId ?? null]
             );
         }
     },
 
-    async bulkInsertDebts(debts: Omit<Debt, 'id'>[]) {
+    async bulkInsertDebts(debts: Debt[]) {
         const db = await getDB();
         for (const d of debts) {
             await db.runAsync(
-                'INSERT INTO debts (type, personName, amount, paidAmount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [d.type, d.personName, d.amount, d.paidAmount ?? 0, d.dueDate ?? null, d.isPaid, d.description ?? null]
+                'INSERT INTO debts (id, type, personName, amount, paidAmount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [d.id, d.type, d.personName, d.amount, d.paidAmount ?? 0, d.dueDate ?? null, d.isPaid, d.description ?? null]
             );
         }
     },
 
-    async bulkInsertReminders(reminders: Omit<Reminder, 'id'>[]) {
+    async bulkInsertReminders(reminders: Reminder[]) {
         const db = await getDB();
         for (const r of reminders) {
             await db.runAsync(
-                'INSERT INTO reminders (title, amount, dayOfMonth, type) VALUES (?, ?, ?, ?)',
-                [r.title, r.amount, r.dayOfMonth, r.type]
+                'INSERT INTO reminders (id, title, amount, dayOfMonth, type) VALUES (?, ?, ?, ?, ?)',
+                [r.id, r.title, r.amount, r.dayOfMonth, r.type]
+            );
+        }
+    },
+
+    async bulkInsertInstallments(installments: Installment[]) {
+        const db = await getDB();
+        for (const i of installments) {
+            await db.runAsync(
+                'INSERT INTO installments (id, totalAmount, totalMonths, remainingMonths, startDate, description) VALUES (?, ?, ?, ?, ?, ?)',
+                [i.id, i.totalAmount, i.totalMonths, i.remainingMonths, i.startDate, i.description]
             );
         }
     }

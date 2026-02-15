@@ -5,6 +5,7 @@ import XLSX from 'xlsx';
 import { Transaction, Debt, Reminder } from '../types';
 import { formatShortDate } from './format';
 import { Platform } from 'react-native';
+import i18n from '../i18n';
 
 // Type casting to avoid linter issues if types are missing in legacy
 const FS = FileSystem as any;
@@ -70,7 +71,7 @@ const saveFile = async (fileName: string, content: string, encoding: any, mimeTy
     }
 };
 
-export const exportToExcel = async (transactions: Transaction[], debts: Debt[]) => {
+export const exportToExcel = async (transactions: Transaction[], debts: Debt[], reminders: Reminder[], installments: any[]) => {
     try {
         const wb = XLSX.utils.book_new();
 
@@ -79,7 +80,7 @@ export const exportToExcel = async (transactions: Transaction[], debts: Debt[]) 
             ID: t.id,
             Tarih: formatShortDate(t.date),
             Tip: t.type === 'income' ? 'Gelir' : 'Gider',
-            Kategori: t.category,
+            Kategori: i18n.t(t.category, { defaultValue: t.category }),
             Tutar: t.amount,
             Aciklama: t.description || '',
         }));
@@ -98,13 +99,36 @@ export const exportToExcel = async (transactions: Transaction[], debts: Debt[]) 
         const wsDebts = XLSX.utils.json_to_sheet(debtData);
         XLSX.utils.book_append_sheet(wb, wsDebts, "Borçlar");
 
+        // Reminders Sheet
+        const reminderData = reminders.map(r => ({
+            ID: r.id,
+            Baslik: r.title,
+            Tutar: r.amount,
+            Gun: r.dayOfMonth,
+            Tip: r.type === 'payment' ? 'Ödeme' : 'Tahsilat',
+        }));
+        const wsReminders = XLSX.utils.json_to_sheet(reminderData);
+        XLSX.utils.book_append_sheet(wb, wsReminders, "Hatırlatıcılar");
+
+        // Installments Sheet
+        const installmentData = installments.map(i => ({
+            ID: i.id,
+            Aciklama: i.description,
+            ToplamTutar: i.totalAmount,
+            TaksitSayisi: i.totalMonths,
+            KalanAy: i.remainingMonths,
+            Baslangic: formatShortDate(i.startDate),
+        }));
+        const wsInstallments = XLSX.utils.json_to_sheet(installmentData);
+        XLSX.utils.book_append_sheet(wb, wsInstallments, "Taksitler");
+
         const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
         const fileName = `finans_rapor_${new Date().getTime()}.xlsx`;
 
         await saveFile(
             fileName,
             wbout,
-            'base64', // STRING LITERAL FIX
+            'base64',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         );
 
@@ -114,15 +138,16 @@ export const exportToExcel = async (transactions: Transaction[], debts: Debt[]) 
     }
 };
 
-export const exportBackup = async (transactions: Transaction[], debts: Debt[], reminders: Reminder[]) => {
+export const exportBackup = async (transactions: Transaction[], debts: Debt[], reminders: Reminder[], installments: any[]) => {
     try {
         const backupData = {
-            version: '1.0.0',
+            version: '1.0.1', // Bumped version for new format
             exportDate: new Date().toISOString(),
             data: {
                 transactions,
                 debts,
-                reminders
+                reminders,
+                installments
             }
         };
 
@@ -132,7 +157,7 @@ export const exportBackup = async (transactions: Transaction[], debts: Debt[], r
         await saveFile(
             fileName,
             jsonString,
-            'utf8', // STRING LITERAL FIX
+            'utf8',
             'application/json'
         );
 
@@ -142,10 +167,10 @@ export const exportBackup = async (transactions: Transaction[], debts: Debt[], r
     }
 };
 
-export const importBackup = async (): Promise<{ transactions: Transaction[], debts: Debt[], reminders: Reminder[] } | null> => {
+export const importBackup = async (): Promise<{ transactions: Transaction[], debts: Debt[], reminders: Reminder[], installments: any[] } | null> => {
     try {
         const result = await DocumentPicker.getDocumentAsync({
-            type: '*/*',
+            type: ['application/json', '*/*'],
             copyToCacheDirectory: true
         });
 
@@ -154,27 +179,42 @@ export const importBackup = async (): Promise<{ transactions: Transaction[], deb
         }
 
         const fileUri = result.assets[0].uri;
-        const fileContent = await FS.readAsStringAsync(fileUri, {
-            encoding: 'utf8' // STRING LITERAL FIX
-        });
+
+        let fileContent;
+        try {
+            fileContent = await FS.readAsStringAsync(fileUri, {
+                encoding: FS.EncodingType.UTF8
+            });
+        } catch (readError: any) {
+            console.error("File read error:", readError);
+            throw new Error(`Dosya okunamadı: ${readError.message}`);
+        }
+
+        if (!fileContent) {
+            throw new Error('Dosya içeriği boş.');
+        }
 
         let backupData;
         try {
             backupData = JSON.parse(fileContent);
         } catch (e) {
-            throw new Error('Dosya okunamadı. Geçerli bir JSON dosyası olduğundan emin olun.');
+            console.error("JSON Parse Error:", e);
+            throw new Error('Dosya formatı geçersiz.');
         }
 
-        if (!backupData.data) {
-            throw new Error('Geçersiz yedek dosyası formatı (data eksik).');
+        if (!backupData || typeof backupData !== 'object') {
+            throw new Error('Geçersiz veri yapısı.');
         }
+
+        const data = backupData.data || backupData;
 
         return {
-            transactions: backupData.data.transactions || [],
-            debts: backupData.data.debts || [],
-            reminders: backupData.data.reminders || []
+            transactions: Array.isArray(data.transactions) ? data.transactions : [],
+            debts: Array.isArray(data.debts) ? data.debts : [],
+            reminders: Array.isArray(data.reminders) ? data.reminders : [],
+            installments: Array.isArray(data.installments) ? data.installments : []
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Restore Error Details:", error);
         throw error;
     }

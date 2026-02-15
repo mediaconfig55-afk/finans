@@ -1,6 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Platform, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, Icon } from 'react-native-paper';
 
 import {
@@ -29,61 +31,131 @@ export type RootStackParamList = {
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function TabNavigator() {
+
+import { TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+
+function CustomTabBar({ state, descriptors, navigation }: any) {
     const theme = useTheme();
+    const insets = useSafeAreaInsets();
 
     return (
+        <View style={{
+            flexDirection: 'row',
+            backgroundColor: '#1c1c1e',
+            height: 70,
+            position: 'absolute',
+            bottom: Math.max(insets.bottom, 20) + 10, // Smart positioning: At least 20px, plus 10px buffer
+            left: 20,
+            right: 20,
+            borderRadius: 35,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.1)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.4,
+            shadowRadius: 12,
+            elevation: 10,
+            alignItems: 'center',
+            justifyContent: 'space-around',
+        }}>
+            {state.routes.map((route: any, index: number) => {
+                const { options } = descriptors[route.key];
+                const label =
+                    options.tabBarLabel !== undefined
+                        ? options.tabBarLabel
+                        : options.title !== undefined
+                            ? options.title
+                            : route.name;
+
+                const isFocused = state.index === index;
+
+                const onPress = () => {
+                    const event = navigation.emit({
+                        type: 'tabPress',
+                        target: route.key,
+                        canPreventDefault: true,
+                    });
+
+                    if (!isFocused && !event.defaultPrevented) {
+                        navigation.navigate(route.name);
+                    }
+                };
+
+                let iconName = "";
+                let activeColor = "";
+
+                // Define icons and colors based on route name
+                switch (route.name) {
+                    case 'DashboardTab':
+                        iconName = isFocused ? "view-dashboard" : "view-dashboard-outline";
+                        activeColor = "#0A84FF"; // iOS Blue
+                        break;
+                    case 'TransactionsTab':
+                        iconName = isFocused ? "swap-horizontal-bold" : "swap-horizontal";
+                        activeColor = "#30D158"; // iOS Green
+                        break;
+                    case 'StatsTab':
+                        iconName = isFocused ? "finance" : "chart-timeline-variant";
+                        activeColor = "#BF5AF2"; // iOS Purple
+                        break;
+                    case 'DebtsTab':
+                        iconName = isFocused ? "credit-card-plus" : "credit-card-outline";
+                        activeColor = "#FF453A"; // iOS Red
+                        break;
+                    default:
+                        iconName = "circle";
+                        activeColor = theme.colors.primary;
+                }
+
+                return (
+                    <TouchableOpacity
+                        key={index}
+                        accessibilityRole="button"
+                        accessibilityState={isFocused ? { selected: true } : {}}
+                        accessibilityLabel={options.tabBarAccessibilityLabel}
+                        testID={options.tabBarTestID}
+                        onPress={onPress}
+                        style={{
+                            flex: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            paddingTop: 10,
+                        }}
+                    >
+                        <View style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 25,
+                            backgroundColor: isFocused ? `${activeColor}20` : 'transparent', // 20% opacity background
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <Icon
+                                source={iconName}
+                                color={isFocused ? activeColor : '#8E8E93'}
+                                size={28}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+}
+
+function TabNavigator() {
+    return (
         <Tab.Navigator
+            tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarStyle: {
-                    backgroundColor: theme.colors.elevation.level2,
-                    borderTopColor: theme.colors.outlineVariant,
-                },
-                tabBarActiveTintColor: theme.colors.primary,
-                tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
             }}
         >
-            <Tab.Screen
-                name="DashboardTab"
-                component={DashboardScreen}
-                options={{
-                    tabBarLabel: 'Özet',
-                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
-                        <Icon source="view-dashboard" color={color} size={size} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="TransactionsTab"
-                component={TransactionsScreen}
-                options={{
-                    tabBarLabel: 'İşlemler',
-                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
-                        <Icon source="format-list-bulleted" color={color} size={size} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="StatsTab"
-                component={StatsScreen}
-                options={{
-                    tabBarLabel: 'Analiz',
-                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
-                        <Icon source="chart-bar" color={color} size={size} />
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="DebtsTab"
-                component={DebtsScreen}
-                options={{
-                    tabBarLabel: 'Borçlar',
-                    tabBarIcon: ({ color, size }: { color: string, size: number }) => (
-                        <Icon source="account-cash" color={color} size={size} />
-                    ),
-                }}
-            />
+            <Tab.Screen name="DashboardTab" component={DashboardScreen} />
+            <Tab.Screen name="TransactionsTab" component={TransactionsScreen} />
+            <Tab.Screen name="StatsTab" component={StatsScreen} />
+            <Tab.Screen name="DebtsTab" component={DebtsScreen} />
         </Tab.Navigator>
     );
 }

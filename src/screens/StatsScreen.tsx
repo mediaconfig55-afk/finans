@@ -1,232 +1,291 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { Text, useTheme, Card, Avatar, ProgressBar } from 'react-native-paper';
-import { PieChart } from 'react-native-gifted-charts';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { Text, useTheme, SegmentedButtons, Surface, ProgressBar, Icon, IconButton } from 'react-native-paper';
+import { PieChart } from "react-native-gifted-charts";
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useStore } from '../store';
 import { formatCurrency } from '../utils/format';
-import { ScreenWrapper } from '../components/ScreenWrapper';
+import { Transaction } from '../types';
 import i18n from '../i18n';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { startOfMonth, endOfMonth, format, addMonths, subMonths, isSameMonth } from 'date-fns';
+import { tr } from 'date-fns/locale';
 
-const screenWidth = Dimensions.get('window').width;
+interface CategoryData {
+    name: string;
+    amount: number;
+    color: string;
+    percentage: number;
+    icon: string;
+}
 
 export const StatsScreen = () => {
     const theme = useTheme();
-    const { transactions, kpi, refreshDashboard } = useStore();
+    const { transactions, fetchTransactions } = useStore();
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [filterType, setFilterType] = useState<'income' | 'expense'>('expense');
 
-    useFocusEffect(
-        React.useCallback(() => {
-            refreshDashboard();
-        }, [])
-    );
+    useEffect(() => {
+        fetchTransactions();
+    }, []);
 
-    const { totalIncome, totalExpense } = kpi;
-    const netBalance = totalIncome - totalExpense;
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+            const tDate = new Date(t.date);
+            return isSameMonth(tDate, selectedDate) && t.type === filterType;
+        });
+    }, [transactions, selectedDate, filterType]);
 
-    // --- Chart Data Preparation ---
-    const pieData = [
-        { value: totalIncome, color: '#4CAF50', text: '' },
-        { value: totalExpense, color: '#F44336', text: '' },
-    ];
+    const totalAmount = useMemo(() => {
+        return filteredTransactions.reduce((acc, curr) => acc + curr.amount, 0);
+    }, [filteredTransactions]);
 
-    // Check if we have data
-    const hasData = totalIncome > 0 || totalExpense > 0;
+    const categoryData = useMemo(() => {
+        const grouped: Record<string, number> = {};
 
-    // Top Expenses Category
-    const categorySpending = useMemo(() => {
-        const spending: Record<string, number> = {};
-        transactions
-            .filter(t => t.type === 'expense')
-            .forEach(t => {
-                spending[t.category] = (spending[t.category] || 0) + t.amount;
-            });
+        filteredTransactions.forEach(t => {
+            const cat = t.category;
+            grouped[cat] = (grouped[cat] || 0) + t.amount;
+        });
 
-        return Object.entries(spending)
-            .sort((a, b) => b[1] - a[1]) // Sort by amount desc
-            .slice(0, 5) // Top 5
-            .map(([cat, amount]) => ({
-                category: cat,
-                amount,
-                color: theme.colors.primary,
-                percentage: totalExpense > 0 ? amount / totalExpense : 0
-            }));
-    }, [transactions, totalExpense]);
+        const data: CategoryData[] = Object.keys(grouped).map(cat => {
+            const amount = grouped[cat];
+            return {
+                name: cat,
+                amount: amount,
+                color: getCategoryColor(cat, theme),
+                percentage: totalAmount > 0 ? (amount / totalAmount) * 100 : 0,
+                icon: getCategoryIcon(cat)
+            };
+        });
 
+        return data.sort((a, b) => b.amount - a.amount);
+    }, [filteredTransactions, totalAmount, theme]);
+
+    const pieData = categoryData.map(d => ({
+        value: d.amount,
+        color: d.color,
+        text: d.percentage > 5 ? `${Math.round(d.percentage)}%` : ''
+    }));
+
+    const nextMonth = () => setSelectedDate(addMonths(selectedDate, 1));
+    const prevMonth = () => setSelectedDate(subMonths(selectedDate, 1));
 
     return (
         <ScreenWrapper>
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <Text variant="headlineMedium" style={styles.headerTitle}>{i18n.t('financialStatus')}</Text>
+            <View style={styles.header}>
+                <IconButton icon="chevron-left" onPress={prevMonth} />
+                <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>
+                    {format(selectedDate, 'MMMM yyyy', { locale: tr })}
+                </Text>
+                <IconButton icon="chevron-right" onPress={nextMonth} />
+            </View>
 
-                {/* Summary Cards Row */}
-                <View style={styles.summaryRow}>
-                    <Card style={[styles.summaryCard, { backgroundColor: '#E8F5E9' }]}>
-                        <Card.Content style={styles.cardContent}>
-                            <Avatar.Icon size={32} icon="arrow-down-circle" style={{ backgroundColor: '#4CAF50' }} />
-                            <Text variant="labelMedium" style={{ marginTop: 8, color: '#2E7D32' }}>{i18n.t('totalIncome')}</Text>
-                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: '#1B5E20' }}>
-                                {formatCurrency(totalIncome)}
-                            </Text>
-                        </Card.Content>
-                    </Card>
+            <View style={styles.content}>
 
-                    <Card style={[styles.summaryCard, { backgroundColor: '#FFEBEE' }]}>
-                        <Card.Content style={styles.cardContent}>
-                            <Avatar.Icon size={32} icon="arrow-up-circle" style={{ backgroundColor: '#F44336' }} />
-                            <Text variant="labelMedium" style={{ marginTop: 8, color: '#C62828' }}>{i18n.t('totalExpense')}</Text>
-                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: '#B71C1C' }}>
-                                {formatCurrency(totalExpense)}
-                            </Text>
-                        </Card.Content>
-                    </Card>
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
+                    <Surface style={[styles.metricCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            <Icon source="scale-balance" size={20} color={theme.colors.primary} />
+                            <Text variant="labelSmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }}>{i18n.t('income')}/{i18n.t('expense')}</Text>
+                        </View>
+                        <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                            {totalAmount > 0 ? (filterType === 'expense' ? `%${((totalAmount / (transactions.filter(t => isSameMonth(new Date(t.date), selectedDate) && t.type === 'income').reduce((a, c) => a + c.amount, 0) || 1)) * 100).toFixed(0)}` : '-') : '-'}
+                        </Text>
+                        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>Oran</Text>
+                    </Surface>
+
+                    <Surface style={[styles.metricCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            <Icon source="calendar-clock" size={20} color={theme.colors.secondary} />
+                            <Text variant="labelSmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }}>Günlük Ort.</Text>
+                        </View>
+                        <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                            {formatCurrency(totalAmount / new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate())}
+                        </Text>
+                        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>Harcama</Text>
+                    </Surface>
                 </View>
 
-                {/* Balance Card */}
-                <Card style={[styles.balanceCard, { backgroundColor: theme.colors.primaryContainer }]}>
-                    <Card.Content>
-                        <View style={styles.rowBetween}>
-                            <View>
-                                <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer }}>{i18n.t('netBalance')}</Text>
-                                <Text variant="headlineMedium" style={{ fontWeight: 'bold', color: theme.colors.onPrimaryContainer }}>
-                                    {formatCurrency(netBalance)}
-                                </Text>
-                            </View>
-                            <MaterialCommunityIcons
-                                name={netBalance >= 0 ? "scale-balance" : "alert-circle-outline"}
-                                size={40}
-                                color={theme.colors.onPrimaryContainer}
-                            />
-                        </View>
-                    </Card.Content>
-                </Card>
+                <SegmentedButtons
+                    value={filterType}
+                    onValueChange={(val: string) => setFilterType(val as 'income' | 'expense')}
+                    buttons={[
+                        { value: 'expense', label: i18n.t('expense'), icon: 'arrow-down' },
+                        { value: 'income', label: i18n.t('income'), icon: 'arrow-up' },
+                    ]}
+                    style={styles.segmentedButton}
+                />
 
-                {/* Charts Section */}
-                <View style={styles.sectionContainer}>
-                    <Text variant="titleLarge" style={styles.sectionTitle}>Gelir / Gider Dengesi</Text>
-                    {hasData ? (
-                        <View style={styles.chartWrapper}>
+                {categoryData.length > 0 ? (
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
+                        <View style={styles.chartContainer}>
                             <PieChart
                                 data={pieData}
                                 donut
-                                radius={80}
+                                showGradient
+                                sectionAutoFocus
+                                radius={90}
                                 innerRadius={60}
-                                centerLabelComponent={() => (
-                                    <View style={{ alignItems: 'center' }}>
-                                        <Text variant="labelSmall" style={{ color: 'gray' }}>Toplam</Text>
-                                        <Text variant="labelMedium" style={{ fontWeight: 'bold' }}>
-                                            {formatCurrency(totalIncome + totalExpense)}
-                                        </Text>
-                                    </View>
-                                )}
+                                innerCircleColor={theme.colors.background}
+                                centerLabelComponent={() => {
+                                    return (
+                                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                            <Text variant="titleMedium" style={{ fontSize: 20, fontWeight: 'bold' }}>
+                                                {formatCurrency(totalAmount)}
+                                            </Text>
+                                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                                                Top. {filterType === 'expense' ? i18n.t('expense') : i18n.t('income')}
+                                            </Text>
+                                        </View>
+                                    );
+                                }}
                             />
-                            {/* Legend */}
-                            <View style={styles.legendContainer}>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.dot, { backgroundColor: '#4CAF50' }]} />
-                                    <Text variant="bodyMedium">{i18n.t('income')} ({totalIncome > 0 ? Math.round((totalIncome / (totalIncome + totalExpense) * 100)) : 0}%)</Text>
-                                </View>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.dot, { backgroundColor: '#F44336' }]} />
-                                    <Text variant="bodyMedium">{i18n.t('expense')} ({totalExpense > 0 ? Math.round((totalExpense / (totalIncome + totalExpense) * 100)) : 0}%)</Text>
-                                </View>
-                            </View>
                         </View>
-                    ) : (
-                        <Text style={{ textAlign: 'center', margin: 20, color: 'gray' }}>Henüz veri yok.</Text>
-                    )}
-                </View>
 
-                {/* Top Expenses List */}
-                <View style={styles.sectionContainer}>
-                    <Text variant="titleLarge" style={styles.sectionTitle}>En Çok Harcama Yaptığın Kategoriler</Text>
-                    {categorySpending.length > 0 ? (
-                        categorySpending.map((item, index) => (
-                            <View key={index} style={styles.categoryRow}>
-                                <View style={styles.categoryInfo}>
-                                    <Text variant="bodyLarge" style={{ fontWeight: '500' }}>{i18n.t(item.category)}</Text>
-                                    <Text variant="bodyMedium">{formatCurrency(item.amount)}</Text>
-                                </View>
-                                <ProgressBar progress={item.percentage} color={theme.colors.error} style={{ height: 6, borderRadius: 3 }} />
-                            </View>
-                        ))
-                    ) : (
-                        <Text style={{ padding: 16, color: 'gray' }}>Harcama verisi bulunamadı.</Text>
-                    )}
-                </View>
-
-            </ScrollView>
+                        <View style={styles.listContainer}>
+                            {categoryData.map((item, index) => (
+                                <Surface key={index} style={[styles.listItem, { backgroundColor: theme.colors.surface }]} elevation={0}>
+                                    <View style={[styles.iconBox, { backgroundColor: item.color + '20' }]}>
+                                        <Icon source={item.icon} size={24} color={item.color} />
+                                    </View>
+                                    <View style={styles.itemContent}>
+                                        <View style={styles.itemRow}>
+                                            <Text variant="titleMedium" style={{ flex: 1, fontWeight: '600' }}>
+                                                {i18n.t(item.name, { defaultValue: item.name })}
+                                            </Text>
+                                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: item.color }}>
+                                                {formatCurrency(item.amount)}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.progressContainer}>
+                                            <ProgressBar progress={item.percentage / 100} color={item.color} style={styles.progressBar} />
+                                            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8, minWidth: 35 }}>
+                                                %{item.percentage.toFixed(1)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </Surface>
+                            ))}
+                        </View>
+                    </ScrollView>
+                ) : (
+                    <View style={styles.emptyState}>
+                        <Icon source="chart-pie" size={64} color={theme.colors.outline} />
+                        <Text style={{ marginTop: 16, color: theme.colors.onSurfaceVariant }}>
+                            {i18n.t('noData')}
+                        </Text>
+                    </View>
+                )}
+            </View>
         </ScreenWrapper>
     );
 };
 
+// Helper functions for colors and icons
+const getCategoryColor = (category: string, theme: any) => {
+    // Map categories to new vibrant theme colors
+    const colors: Record<string, string> = {
+        market: '#FB923C', // Orange 400
+        food: '#F472B6', // Pink 400
+        transport: '#38BDF8', // Sky 400
+        bill: '#EF4444', // Red 500
+        rent: '#A78BFA', // Violet 400
+        health: '#F87171', // Red 400
+        clothing: '#22D3EE', // Cyan 400
+        technology: '#94A3B8', // Slate 400
+        entertainment: '#E879F9', // Fuchsia 400
+        education: '#818CF8', // Indigo 400
+        salary: '#34D399', // Emerald 400
+        extraIncome: '#A3E635', // Lime 400
+        investment: '#FACC15', // Yellow 400
+        other: '#9CA3AF' // Gray 400
+    };
+    return colors[category] || theme.colors.primary;
+};
+
+const getCategoryIcon = (category: string) => {
+    const icons: Record<string, string> = {
+        market: 'cart',
+        food: 'food',
+        transport: 'bus',
+        bill: 'file-document',
+        rent: 'home',
+        health: 'medical-bag',
+        clothing: 'hanger',
+        technology: 'laptop',
+        entertainment: 'gamepad-variant',
+        education: 'school',
+        salary: 'cash-multiple',
+        extraIncome: 'cash-plus',
+        investment: 'chart-line',
+        other: 'dots-horizontal'
+    };
+    return icons[category] || 'shape';
+};
+
 const styles = StyleSheet.create({
-    content: {
-        padding: 16,
-        paddingBottom: 100,
-    },
-    headerTitle: {
-        fontWeight: 'bold',
-        marginBottom: 16,
-    },
-    summaryRow: {
+    header: {
         flexDirection: 'row',
-        gap: 12,
-        marginBottom: 12,
-    },
-    summaryCard: {
-        flex: 1,
-        borderRadius: 16,
-    },
-    cardContent: {
-        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 8,
         paddingVertical: 12,
     },
-    balanceCard: {
+    content: {
+        flex: 1,
+        paddingHorizontal: 16,
+    },
+    segmentedButton: {
         marginBottom: 24,
-        borderRadius: 16,
     },
-    rowBetween: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    chartContainer: {
         alignItems: 'center',
+        marginBottom: 32,
     },
-    sectionContainer: {
-        backgroundColor: 'rgba(0,0,0,0.02)',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
+    listContainer: {
+        gap: 16,
     },
-    sectionTitle: {
-        fontWeight: 'bold',
-        marginBottom: 16,
-        fontSize: 18,
-    },
-    chartWrapper: {
-        alignItems: 'center',
+    listItem: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        alignItems: 'center',
+        borderRadius: 12,
+        padding: 8,
     },
-    legendContainer: {
+    iconBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
         justifyContent: 'center',
-    },
-    legendItem: {
-        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginRight: 12,
     },
-    dot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 8,
+    itemContent: {
+        flex: 1,
     },
-    categoryRow: {
-        marginBottom: 16,
-    },
-    categoryInfo: {
+    itemRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 4,
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    progressContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    progressBar: {
+        flex: 1,
+        height: 6,
+        borderRadius: 3,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 60,
+    },
+    metricCard: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 16,
     }
 });

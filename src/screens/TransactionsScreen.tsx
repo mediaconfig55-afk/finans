@@ -7,6 +7,7 @@ import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
 import { Transaction } from '../types';
 import { ScreenWrapper } from '../components/ScreenWrapper';
+import { TransactionCard } from '../components/TransactionCard';
 import { groupTransactionsByDate } from '../utils/dateGrouping';
 import { hapticLight, hapticSuccess, hapticError } from '../utils/haptics';
 import i18n from '../i18n';
@@ -106,46 +107,15 @@ export const TransactionsScreen = () => {
         const icon = isIncome ? 'arrow-up' : isExpense ? 'arrow-down' : 'alert-circle';
 
         return (
-            <Swipeable
+            <TransactionCard
+                item={item}
+                onPress={() => {
+                    hapticLight();
+                    item.type !== 'debt' && (navigation as any).navigate('TransactionDetail', { transaction: item });
+                }}
                 renderRightActions={() => renderRightActions(item)}
                 renderLeftActions={() => renderLeftActions(item)}
-                overshootRight={false}
-                overshootLeft={false}
-            >
-                <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
-                    <TouchableOpacity
-                        onPress={() => {
-                            hapticLight();
-                            item.type !== 'debt' && (navigation as any).navigate('TransactionDetail', { transaction: item });
-                        }}
-                        style={styles.cardContent}
-                    >
-                        <View style={styles.cardHeader}>
-                            <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-                                <Icon source={icon} size={24} color={color} />
-                            </View>
-                            <View style={styles.cardInfo}>
-                                <Text variant="titleMedium" style={styles.categoryText}>
-                                    {i18n.t(item.category, { defaultValue: item.category })}
-                                </Text>
-                                {item.description && (
-                                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                        {item.description}
-                                    </Text>
-                                )}
-                            </View>
-                        </View>
-                        <View style={styles.cardFooter}>
-                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                {formatShortDate(item.date)}
-                            </Text>
-                            <Text variant="titleMedium" style={{ color: color, fontWeight: 'bold' }}>
-                                {item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                </Surface>
-            </Swipeable>
+            />
         );
     };
 
@@ -243,39 +213,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 80,
-    },
-    card: {
-        marginBottom: 12,
-        borderRadius: 12,
-        overflow: 'hidden',
-    },
-    categoryText: {
-        fontWeight: 'bold',
-    },
-    cardContent: {
-        padding: 16,
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    cardInfo: {
-        flex: 1,
-    },
-    cardFooter: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        paddingBottom: 140, // Increased for Floating Tab Bar
     },
     emptyContainer: {
         padding: 40,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Surface, Text, useTheme, Icon } from 'react-native-paper';
+import { GlassyCard } from './GlassyCard';
 import { formatCurrency } from '../utils/format';
 
 interface SummaryCardProps {
@@ -32,7 +33,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ title, amount, type, i
     };
 
     const content = (
-        <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
+        <GlassyCard style={styles.card} intensity={0.08}>
             <View style={styles.iconContainer}>
                 <View style={[styles.iconCircle, { backgroundColor: color + '20' }]}>
                     <Icon source={icon} size={20} color={color} />
@@ -49,7 +50,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ title, amount, type, i
             >
                 {formattedAmount}
             </Text>
-        </Surface>
+        </GlassyCard>
     );
 
     if (onPress) {

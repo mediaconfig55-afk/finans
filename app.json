@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.finans.app"
+      "bundleIdentifier": "com.fin.app"
     },
     "android": {
-      "package": "com.finans.app",
+      "package": "com.fin.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -37,7 +37,6 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite",
       "@react-native-community/datetimepicker",
       "expo-build-properties",
       [
@@ -51,8 +50,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "c1722c30-1414-464b-8b66-909c35c95ef8"
+        "projectId": "7e532862-1fd3-4376-ac80-b23deaa4a96c"
       }
-    }
+    },
+    "owner": "ghost0055"
   }
 }
