@@ -19,7 +19,7 @@ export const DashboardScreen = () => {
     const { kpi, transactions, refreshDashboard, loading, dailySpending, reminders, fetchReminders, userName } = useStore();
     const insets = useSafeAreaInsets();
 
-    const totalBalance = kpi.totalIncome - kpi.totalExpense;
+    const totalBalance = kpi.grandTotalIncome - kpi.grandTotalExpense;
     const today = new Date().toISOString().split('T')[0];
     const todaysSpendingAmount = dailySpending.find(d => d.date === today)?.total || 0;
 

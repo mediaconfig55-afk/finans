@@ -6,7 +6,13 @@ interface AppState {
     transactions: Transaction[];
     installments: Installment[];
     debts: Debt[];
-    kpi: { totalIncome: number; totalExpense: number; totalDebt: number };
+    kpi: {
+        totalIncome: number;
+        totalExpense: number;
+        totalDebt: number;
+        grandTotalIncome: number;
+        grandTotalExpense: number;
+    };
     loading: boolean;
     theme: 'light' | 'dark';
     userName: string | null;
@@ -46,7 +52,13 @@ export const useStore = create<AppState>((set, get) => ({
 
     dailySpending: [],
     reminders: [],
-    kpi: { totalIncome: 0, totalExpense: 0, totalDebt: 0 },
+    kpi: {
+        totalIncome: 0,
+        totalExpense: 0,
+        totalDebt: 0,
+        grandTotalIncome: 0,
+        grandTotalExpense: 0
+    },
     loading: false,
     theme: 'dark', // Default dark theme
     userName: null,

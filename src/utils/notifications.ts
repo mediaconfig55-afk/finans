@@ -13,6 +13,8 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerForPushNotificationsAsync() {
+    let token;
+
     if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
             name: 'Hatırlatıcılar',
@@ -20,8 +22,8 @@ export async function registerForPushNotificationsAsync() {
             vibrationPattern: [0, 250, 250, 250],
             lightColor: '#FF231F7C',
             sound: 'default',
-            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC, // Show on lockscreen
-            bypassDnd: true, // Try to bypass Do Not Disturb (requires extra permission, but good intent)
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
         });
     }
 
@@ -30,17 +32,25 @@ export async function registerForPushNotificationsAsync() {
         let finalStatus = existingStatus;
 
         if (existingStatus !== 'granted') {
-            const { status } = await Notifications.requestPermissionsAsync();
+            const { status } = await Notifications.requestPermissionsAsync({
+                ios: {
+                    allowAlert: true,
+                    allowBadge: true,
+                    allowSound: true,
+                },
+            });
             finalStatus = status;
         }
 
         if (finalStatus !== 'granted') {
-            console.warn('Permission not granted!');
+            console.warn('Failed to get push token for push notification!');
             return false;
         }
         return true;
+    } else {
+        console.log('Must use physical device for Push Notifications');
+        return false;
     }
-    return false;
 }
 
 export async function scheduleReminderNotification(reminderId: number, title: string, amount: number, notificationDate: Date) {
