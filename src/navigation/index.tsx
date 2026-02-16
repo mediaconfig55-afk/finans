@@ -42,12 +42,12 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         <View style={{
             flexDirection: 'row',
             backgroundColor: '#1c1c1e',
-            height: 70,
+            height: 65, // Slightly reduced for sleeker look
             position: 'absolute',
-            bottom: Math.max(insets.bottom, 20) + 10, // Smart positioning: At least 20px, plus 10px buffer
-            left: 20,
-            right: 20,
-            borderRadius: 35,
+            bottom: Math.max(insets.bottom, 16) + 4, // Dynamic safe area handling
+            left: 16,
+            right: 16,
+            borderRadius: 32,
             borderWidth: 1,
             borderColor: 'rgba(255,255,255,0.1)',
             shadowColor: '#000',

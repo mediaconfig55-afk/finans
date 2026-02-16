@@ -144,7 +144,7 @@ export const DashboardScreen = () => {
                 icon="plus"
                 style={[styles.fab, {
                     backgroundColor: theme.colors.primary,
-                    bottom: (insets.bottom || 16) + 85 // Sit just above the floating oval tab bar (approx 20 + 60 + 5)
+                    bottom: (insets.bottom || 16) + 70 // Dynamic positioning above tab bar
                 }]}
                 color={theme.colors.onPrimary}
                 onPress={() => navigation.navigate('AddTransaction' as never)}

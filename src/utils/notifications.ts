@@ -90,10 +90,11 @@ export async function scheduleReminderNotification(reminderId: number, title: st
             });
         } catch (error) {
             console.error('Error scheduling notification:', error);
+            return false;
         }
     }
 
-    return notificationDate;
+    return true;
 }
 
 export async function cancelReminderNotifications(reminderId: number) {

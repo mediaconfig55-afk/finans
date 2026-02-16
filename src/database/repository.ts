@@ -198,41 +198,49 @@ export const Repository = {
 
     async bulkInsertTransactions(transactions: Transaction[]) {
         const db = await getDB();
-        for (const t of transactions) {
-            await db.runAsync(
-                'INSERT INTO transactions (id, type, amount, category, date, description, installmentId) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [t.id, t.type, t.amount, t.category, t.date, t.description ?? null, t.installmentId ?? null]
-            );
-        }
+        await db.withTransactionAsync(async () => {
+            for (const t of transactions) {
+                await db.runAsync(
+                    'INSERT INTO transactions (id, type, amount, category, date, description, installmentId) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [t.id, t.type, t.amount, t.category, t.date, t.description ?? null, t.installmentId ?? null]
+                );
+            }
+        });
     },
 
     async bulkInsertDebts(debts: Debt[]) {
         const db = await getDB();
-        for (const d of debts) {
-            await db.runAsync(
-                'INSERT INTO debts (id, type, personName, amount, paidAmount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [d.id, d.type, d.personName, d.amount, d.paidAmount ?? 0, d.dueDate ?? null, d.isPaid, d.description ?? null]
-            );
-        }
+        await db.withTransactionAsync(async () => {
+            for (const d of debts) {
+                await db.runAsync(
+                    'INSERT INTO debts (id, type, personName, amount, paidAmount, dueDate, isPaid, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [d.id, d.type, d.personName, d.amount, d.paidAmount ?? 0, d.dueDate ?? null, d.isPaid, d.description ?? null]
+                );
+            }
+        });
     },
 
     async bulkInsertReminders(reminders: Reminder[]) {
         const db = await getDB();
-        for (const r of reminders) {
-            await db.runAsync(
-                'INSERT INTO reminders (id, title, amount, dayOfMonth, type) VALUES (?, ?, ?, ?, ?)',
-                [r.id, r.title, r.amount, r.dayOfMonth, r.type]
-            );
-        }
+        await db.withTransactionAsync(async () => {
+            for (const r of reminders) {
+                await db.runAsync(
+                    'INSERT INTO reminders (id, title, amount, dayOfMonth, type) VALUES (?, ?, ?, ?, ?)',
+                    [r.id, r.title, r.amount, r.dayOfMonth, r.type]
+                );
+            }
+        });
     },
 
     async bulkInsertInstallments(installments: Installment[]) {
         const db = await getDB();
-        for (const i of installments) {
-            await db.runAsync(
-                'INSERT INTO installments (id, totalAmount, totalMonths, remainingMonths, startDate, description) VALUES (?, ?, ?, ?, ?, ?)',
-                [i.id, i.totalAmount, i.totalMonths, i.remainingMonths, i.startDate, i.description]
-            );
-        }
+        await db.withTransactionAsync(async () => {
+            for (const i of installments) {
+                await db.runAsync(
+                    'INSERT INTO installments (id, totalAmount, totalMonths, remainingMonths, startDate, description) VALUES (?, ?, ?, ?, ?, ?)',
+                    [i.id, i.totalAmount, i.totalMonths, i.remainingMonths, i.startDate, i.description]
+                );
+            }
+        });
     }
 };

@@ -17,6 +17,8 @@ interface AppState {
     theme: 'light' | 'dark';
     userName: string | null;
     hasCompletedOnboarding: boolean;
+    error: string | null;
+    setError: (error: string | null) => void;
 
     fetchTransactions: () => Promise<void>;
     addTransaction: (t: Omit<Transaction, 'id'>) => Promise<void>;
@@ -64,101 +66,163 @@ export const useStore = create<AppState>((set, get) => ({
     userName: null,
     hasCompletedOnboarding: false,
 
+    error: null,
+    setError: (error) => set({ error }),
+
     refreshDashboard: async () => {
-        set({ loading: true });
-        const [transactions, kpiData, dailySpending, reminders, totalDebt] = await Promise.all([
-            Repository.getTransactions(),
-            Repository.getKpiSummary(),
-            Repository.getDailySpending(),
-            Repository.getReminders(),
-            Repository.getTotalDebt(),
-        ]);
-        const kpi = { ...kpiData, totalDebt };
-        set({ transactions, kpi, dailySpending, reminders, loading: false });
+        if (get().loading) return; // Prevent multiple calls
+        set({ loading: true, error: null });
+        try {
+            const [transactions, kpiData, dailySpending, reminders, totalDebt] = await Promise.all([
+                Repository.getTransactions(),
+                Repository.getKpiSummary(),
+                Repository.getDailySpending(),
+                Repository.getReminders(),
+                Repository.getTotalDebt(),
+            ]);
+            const kpi = { ...kpiData, totalDebt };
+            set({ transactions, kpi, dailySpending, reminders, loading: false });
+        } catch (e: any) {
+            set({ error: e.message || 'Dashboard yenilenirken hata oluştu', loading: false });
+            console.error(e);
+        }
     },
 
     fetchTransactions: async () => {
-        set({ loading: true });
+        set({ loading: true, error: null });
         try {
             const transactions = await Repository.getTransactions();
             set({ transactions });
-        } catch (e) {
-            console.error(e);
+        } catch (e: any) {
+            set({ error: e.message, loading: false });
         } finally {
             set({ loading: false });
         }
     },
 
     addTransaction: async (t) => {
-        await Repository.addTransaction(t);
-        get().refreshDashboard();
+        try {
+            await Repository.addTransaction(t);
+            await get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'İşlem eklenirken hata: ' + e.message });
+        }
     },
 
     deleteTransaction: async (id) => {
-        await Repository.deleteTransaction(id);
-        get().refreshDashboard();
+        try {
+            await Repository.deleteTransaction(id);
+            await get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Silme işlemi başarısız: ' + e.message });
+        }
     },
 
     fetchInstallments: async () => {
-        const installments = await Repository.getInstallments();
-        set({ installments });
+        try {
+            const installments = await Repository.getInstallments();
+            set({ installments });
+        } catch (e: any) {
+            console.error(e);
+        }
     },
 
     addInstallment: async (i) => {
-        await Repository.addInstallment(i);
-        await get().fetchInstallments();
+        try {
+            await Repository.addInstallment(i);
+            await get().fetchInstallments();
+        } catch (e: any) {
+            set({ error: 'Taksit eklenemedi: ' + e.message });
+        }
     },
 
     fetchDebts: async () => {
-        const debts = await Repository.getDebts();
-        set({ debts });
+        try {
+            const debts = await Repository.getDebts();
+            set({ debts });
+        } catch (e: any) {
+            console.error(e);
+        }
     },
 
     addDebt: async (d) => {
-        await Repository.addDebt(d);
-        await get().fetchDebts();
-        get().refreshDashboard();
+        try {
+            await Repository.addDebt(d);
+            await get().fetchDebts();
+            get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Borç eklenemedi: ' + e.message });
+        }
     },
 
     toggleDebtStatus: async (id, currentStatus) => {
-        await Repository.toggleDebtStatus(id, currentStatus);
-        await get().fetchDebts();
-        get().refreshDashboard();
+        try {
+            await Repository.toggleDebtStatus(id, currentStatus);
+            await get().fetchDebts();
+            get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Durum güncellenemedi.' });
+        }
     },
 
     deleteDebt: async (id) => {
-        await Repository.deleteDebt(id);
-        await get().fetchDebts();
-        get().refreshDashboard();
+        try {
+            await Repository.deleteDebt(id);
+            await get().fetchDebts();
+            get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Borç silinemedi.' });
+        }
     },
 
     updateDebt: async (debt) => {
-        await Repository.updateDebt(debt);
-        await get().fetchDebts();
-        get().refreshDashboard();
+        try {
+            await Repository.updateDebt(debt);
+            await get().fetchDebts();
+            get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Güncelleme başarısız.' });
+        }
     },
 
     updateTransaction: async (t) => {
-        await Repository.updateTransaction(t);
-        get().refreshDashboard();
+        try {
+            await Repository.updateTransaction(t);
+            await get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Güncelleme başarısız.' });
+        }
     },
 
     fetchReminders: async () => {
-        const reminders = await Repository.getReminders();
-        set({ reminders });
+        try {
+            const reminders = await Repository.getReminders();
+            set({ reminders });
+        } catch (e: any) {
+            console.error(e);
+        }
     },
 
     addReminder: async (r) => {
-        const id = await Repository.addReminder(r);
-        await get().fetchReminders();
-        get().refreshDashboard();
-        return id;
+        try {
+            const id = await Repository.addReminder(r);
+            await get().fetchReminders();
+            get().refreshDashboard();
+            return id;
+        } catch (e: any) {
+            set({ error: 'Hatırlatıcı eklenemedi.' });
+            throw e;
+        }
     },
 
     deleteReminder: async (id) => {
-        await Repository.deleteReminder(id);
-        await get().fetchReminders();
-        get().refreshDashboard();
+        try {
+            await Repository.deleteReminder(id);
+            await get().fetchReminders();
+            get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: 'Silinemedi.' });
+        }
     },
 
     setTheme: (theme) => set({ theme }),

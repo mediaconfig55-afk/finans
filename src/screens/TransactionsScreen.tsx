@@ -99,19 +99,20 @@ export const TransactionsScreen = () => {
         </View>
     );
 
-    const renderItem = ({ item }: { item: any }) => {
+    const renderItem = ({ item }: { item: Transaction | (Debt & { date?: string, category?: string }) }) => {
         const isIncome = item.type === 'income';
         const isExpense = item.type === 'expense';
-        const isDebt = item.type === 'debt';
-        const color = isIncome ? (theme.colors as any).customIncome : isExpense ? (theme.colors as any).customExpense : theme.colors.error;
-        const icon = isIncome ? 'arrow-up' : isExpense ? 'arrow-down' : 'alert-circle';
+        // const isDebt = item.type === 'debt'; // Not used
+        // const color ...
 
         return (
             <TransactionCard
-                item={item}
+                item={item as Transaction} // TransactionCard handles display
                 onPress={() => {
                     hapticLight();
-                    item.type !== 'debt' && (navigation as any).navigate('TransactionDetail', { transaction: item });
+                    if (item.type !== 'debt') {
+                        (navigation as any).navigate('TransactionDetail', { transaction: item });
+                    }
                 }}
                 renderRightActions={() => renderRightActions(item)}
                 renderLeftActions={() => renderLeftActions(item)}
