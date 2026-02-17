@@ -13,6 +13,7 @@ const customColors = {
 
 export const AppLightTheme = {
     ...MD3LightTheme,
+    roundness: 12,
     colors: {
         ...MD3LightTheme.colors,
         primary: customColors.primary,
@@ -42,7 +43,7 @@ export const AppLightTheme = {
 
 export const AppDarkTheme = {
     ...MD3DarkTheme,
-    roundness: 24, // High roundness for buttons/cards
+    roundness: 12, // Flat, modern roundness for buttons/cards
     colors: {
         ...MD3DarkTheme.colors,
         primary: '#FF6B00', // Vibrant Orange (Fitness Style)

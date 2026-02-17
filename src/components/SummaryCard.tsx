@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     card: {
         flex: 1,
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 12,
         marginHorizontal: 4,
         minHeight: 120,
         justifyContent: 'space-between',
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     iconCircle: {
         width: 40,
         height: 40,
-        borderRadius: 20,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },

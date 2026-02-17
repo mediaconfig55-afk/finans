@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     },
     card: {
         padding: 24,
-        borderRadius: 16,
+        borderRadius: 12,
         alignItems: 'center',
     },
     input: {

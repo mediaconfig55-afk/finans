@@ -248,13 +248,13 @@ const styles = StyleSheet.create({
     listItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 12,
+        borderRadius: 10,
         padding: 8,
     },
     iconBox: {
         width: 48,
         height: 48,
-        borderRadius: 12,
+        borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -286,6 +286,6 @@ const styles = StyleSheet.create({
     metricCard: {
         flex: 1,
         padding: 12,
-        borderRadius: 16,
+        borderRadius: 12,
     }
 });

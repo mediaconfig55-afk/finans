@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Text, useTheme, FAB, IconButton, Icon, Surface } from 'react-native-paper';
+import { Text, useTheme, FAB, IconButton, Icon, Surface, SegmentedButtons } from 'react-native-paper';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
@@ -21,6 +21,7 @@ export const DebtsScreen = () => {
     const [visible, setVisible] = useState(false);
     const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
     const [paymentAmount, setPaymentAmount] = useState('');
+    const [debtType, setDebtType] = useState<'debt' | 'receivable'>('debt');
 
     const { showToast } = useToast();
 
@@ -57,12 +58,11 @@ export const DebtsScreen = () => {
         hideDialog();
     };
 
-    // Sadece borçları göster (type === 'debt')
-    const debtItems = debts.filter(d => d.type === 'debt');
+    const debtItems = debts.filter(d => d.type === debtType);
 
     const renderItem = ({ item }: { item: Debt }) => {
         const isPaid = item.isPaid === 1;
-        const color = (theme.colors as any).customExpense;
+        const color = debtType === 'debt' ? (theme.colors as any).customExpense : (theme.colors as any).customIncome;
         const progress = item.amount > 0 ? (item.paidAmount || 0) / item.amount : 0;
 
         return (
@@ -70,7 +70,7 @@ export const DebtsScreen = () => {
                 <TouchableOpacity style={styles.cardContent}>
                     <View style={styles.cardHeader}>
                         <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-                            <Icon source="alert-circle" size={24} color={color} />
+                            <Icon source={debtType === 'debt' ? "alert-circle" : "cash-check"} size={24} color={color} />
                         </View>
                         <View style={styles.cardInfo}>
                             <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface, textDecorationLine: isPaid ? 'line-through' : 'none' }}>
@@ -130,6 +130,17 @@ export const DebtsScreen = () => {
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                     {i18n.t('debtsDesc')}
                 </Text>
+            </View>
+
+            <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                <SegmentedButtons
+                    value={debtType}
+                    onValueChange={(value) => setDebtType(value as 'debt' | 'receivable')}
+                    buttons={[
+                        { value: 'debt', label: i18n.t('debts', { defaultValue: 'Borçlar' }) },
+                        { value: 'receivable', label: i18n.t('receivables', { defaultValue: 'Alacaklar' }) },
+                    ]}
+                />
             </View>
 
             <FlatList

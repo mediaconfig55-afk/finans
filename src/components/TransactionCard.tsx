@@ -93,7 +93,7 @@ export const TransactionCard = ({ item, onPress, renderRightActions, renderLeftA
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 16,
+        borderRadius: 12,
         marginVertical: 6,
         marginHorizontal: 2,
         overflow: 'hidden',
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     iconContainer: {
         width: 48,
         height: 48,
-        borderRadius: 16,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

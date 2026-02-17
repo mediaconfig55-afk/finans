@@ -35,50 +35,47 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 
-import { TouchableOpacity, StyleSheet, Dimensions, Text } from 'react-native';
+import { TouchableOpacity, Text } from 'react-native';
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
     const theme = useAppTheme();
     const insets = useSafeAreaInsets();
+    const isDark = theme.dark;
+
+    // Gradient colors for the bar background
+    const gradientColors = isDark
+        ? ['#1A1035', '#0D1B2A', '#1A1035'] as const
+        : ['#F0EAFF', '#E8F4FD', '#F0EAFF'] as const;
 
     return (
         <View style={{
             position: 'absolute',
-            bottom: Math.max(insets.bottom, 20),
-            left: 20,
-            right: 20,
-            height: 70,
-            borderRadius: 35,
-            overflow: 'hidden', // Ensure gradient stays within bounds
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.5,
-            shadowRadius: 20,
-            elevation: 15,
+            bottom: Math.max(insets.bottom, 12),
+            left: 12,
+            right: 12,
+            shadowColor: isDark ? '#7C3AED' : '#6366F1',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.4 : 0.15,
+            shadowRadius: 24,
+            elevation: 12,
         }}>
             <LinearGradient
-                colors={[theme.colors.tabBarBg, theme.colors.tabBarBg]}
+                colors={gradientColors}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+                end={{ x: 1, y: 0 }}
                 style={{
+                    height: 68,
+                    borderRadius: 22,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-around',
-                    height: '100%',
-                    borderWidth: 1,
-                    borderColor: theme.colors.tabBarBorder,
-                    borderRadius: 35,
+                    borderWidth: 1.5,
+                    borderColor: isDark ? 'rgba(124, 58, 237, 0.25)' : 'rgba(99, 102, 241, 0.12)',
+                    paddingHorizontal: 8,
                 }}
             >
                 {state.routes.map((route: any, index: number) => {
                     const { options } = descriptors[route.key];
-                    const label =
-                        options.tabBarLabel !== undefined
-                            ? options.tabBarLabel
-                            : options.title !== undefined
-                                ? options.title
-                                : route.name;
-
                     const isFocused = state.index === index;
 
                     const onPress = () => {
@@ -97,26 +94,25 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                     let activeColor = "";
                     let tabLabel = "";
 
-                    // Define icons, colors and labels based on route name
                     switch (route.name) {
                         case 'DashboardTab':
                             iconName = isFocused ? "view-dashboard" : "view-dashboard-outline";
-                            activeColor = theme.colors.tabDashboard;
+                            activeColor = '#0A84FF';
                             tabLabel = i18n.t('dashboard', { defaultValue: 'Ana Sayfa' });
                             break;
                         case 'TransactionsTab':
                             iconName = isFocused ? "swap-horizontal-bold" : "swap-horizontal";
-                            activeColor = theme.colors.tabTransactions;
+                            activeColor = '#30D158';
                             tabLabel = i18n.t('transactions', { defaultValue: 'İşlemler' });
                             break;
                         case 'StatsTab':
                             iconName = isFocused ? "finance" : "chart-timeline-variant";
-                            activeColor = theme.colors.tabStats;
+                            activeColor = '#BF5AF2';
                             tabLabel = i18n.t('statistics', { defaultValue: 'İstatistik' });
                             break;
                         case 'DebtsTab':
                             iconName = isFocused ? "credit-card-plus" : "credit-card-outline";
-                            activeColor = theme.colors.tabDebts;
+                            activeColor = '#FF453A';
                             tabLabel = i18n.t('debts', { defaultValue: 'Borçlar' });
                             break;
                         default:
@@ -124,6 +120,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                             activeColor = theme.colors.primary;
                             tabLabel = '';
                     }
+
+                    const inactiveColor = isDark ? '#6B7280' : '#94A3B8';
 
                     return (
                         <TouchableOpacity
@@ -133,35 +131,51 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                             accessibilityLabel={options.tabBarAccessibilityLabel}
                             testID={options.tabBarTestID}
                             onPress={onPress}
+                            activeOpacity={0.7}
                             style={{
                                 flex: 1,
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 height: '100%',
-                                paddingTop: 10,
                             }}
                         >
+                            {/* Active tab: glowing pill indicator */}
                             <View style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: 22,
-                                backgroundColor: isFocused ? `${activeColor}25` : 'transparent',
+                                paddingHorizontal: isFocused ? 14 : 0,
+                                paddingVertical: isFocused ? 6 : 0,
+                                borderRadius: 14,
+                                backgroundColor: isFocused ? `${activeColor}20` : 'transparent',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                transform: [{ scale: isFocused ? 1.05 : 1 }], // Micro-animation
+                                flexDirection: 'row',
+                                gap: isFocused ? 6 : 0,
+                                transform: [{ scale: isFocused ? 1.08 : 1 }],
                             }}>
                                 <Icon
                                     source={iconName}
-                                    color={isFocused ? activeColor : theme.colors.tabBarInactive}
-                                    size={22}
+                                    color={isFocused ? activeColor : inactiveColor}
+                                    size={isFocused ? 24 : 22}
                                 />
+                                {isFocused && (
+                                    <Text style={{
+                                        fontSize: 11,
+                                        fontWeight: '700',
+                                        color: activeColor,
+                                        letterSpacing: 0.3,
+                                    }}>{tabLabel}</Text>
+                                )}
                             </View>
-                            <Text style={{
-                                fontSize: 10,
-                                marginTop: 2,
-                                color: isFocused ? activeColor : theme.colors.tabBarInactive,
-                                fontWeight: isFocused ? '600' : '400',
-                            }}>{tabLabel}</Text>
+                            {/* Colored dot below inactive tabs */}
+                            {!isFocused && (
+                                <View style={{
+                                    width: 4,
+                                    height: 4,
+                                    borderRadius: 2,
+                                    backgroundColor: activeColor,
+                                    opacity: 0.4,
+                                    marginTop: 4,
+                                }} />
+                            )}
                         </TouchableOpacity>
                     );
                 })}

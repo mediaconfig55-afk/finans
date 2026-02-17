@@ -35,7 +35,7 @@ type FormData = z.infer<typeof schema>;
 
 const CATEGORIES = {
     income: ['salary', 'extraIncome', 'investment', 'other'] as const,
-    expense: ['market', 'food', 'transport', 'bill', 'entertainment', 'rent', 'health', 'clothing', 'technology', 'other'] as const,
+    expense: ['market', 'food', 'transport', 'bill', 'entertainment', 'rent', 'health', 'clothing', 'technology', 'education', 'other'] as const,
 };
 
 export const AddTransactionScreen = () => {

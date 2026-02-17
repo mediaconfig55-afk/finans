@@ -41,17 +41,17 @@ export const GlassyCard = ({ children, style, intensity = 0.05, gradientColors }
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 24,
+        borderRadius: 12,
         padding: 16,
         borderWidth: 1,
-        // Soft shadow for depth
+        // Subtle shadow for minimal depth
         shadowOffset: {
             width: 0,
-            height: 4,
+            height: 2,
         },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 5,
-        overflow: 'hidden', // Ensure gradient respects border radius
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        elevation: 2,
+        overflow: 'hidden',
     },
 });

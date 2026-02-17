@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     },
     card: {
         marginBottom: 12,
-        borderRadius: 12,
+        borderRadius: 10,
         overflow: 'hidden',
     },
     cardContent: {
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     iconContainer: {
         width: 48,
         height: 48,
-        borderRadius: 24,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,

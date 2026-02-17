@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     surface: {
-        borderRadius: 28,
+        borderRadius: 12,
         width: '100%',
         maxWidth: 400,
         overflow: 'hidden',
