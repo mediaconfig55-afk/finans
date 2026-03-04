@@ -8,6 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
+import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
+import { suggestTags, tagsToString } from '../utils/autoTags';
 import i18n from '../i18n';
 import { RootStackParamList } from '../navigation';
 import { useToast } from '../context/ToastContext';
@@ -16,7 +18,7 @@ import { useAppTheme } from '../hooks/useAppTheme';
 const schema = z.object({
     amount: z.string()
         .min(1, i18n.t('amountRequired'))
-        .refine((val) => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, i18n.t('validAmountRequired')),
+        .refine((val) => { const n = parseFormattedAmount(val); return !isNaN(n) && n > 0; }, i18n.t('validAmountRequired')),
     description: z.string().optional(),
     category: z.string().min(1, i18n.t('categoryRequired')),
     isInstallment: z.boolean().optional(),
@@ -125,7 +127,7 @@ export const AddTransactionScreen = () => {
                 // We won't add reminders for installments in this request specifically unless asked, 
                 // but user said "reminder system". Let's stick to simple transaction reminder for now.
 
-                const amountVal = parseFloat(data.amount.replace(',', '.'));
+                const amountVal = parseFormattedAmount(data.amount);
                 const countVal = parseInt(data.installmentCount);
                 const monthlyAmount = amountVal / countVal;
 
@@ -149,10 +151,11 @@ export const AddTransactionScreen = () => {
                     category: data.category,
                     date: localDate,
                     description: `${data.description || i18n.t('installment')} (1/${countVal})`,
+                    tags: tagsToString(suggestTags(data.description, data.category, 'expense')),
                 });
             } else {
                 // Normal Transaction
-                const amountVal = parseFloat(data.amount.replace(',', '.'));
+                const amountVal = parseFormattedAmount(data.amount);
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
@@ -164,6 +167,7 @@ export const AddTransactionScreen = () => {
                     category: data.category,
                     description: data.description,
                     date: localDate,
+                    tags: tagsToString(suggestTags(data.description, data.category, type)),
                 });
 
                 // REMINDER LOGIC
@@ -228,7 +232,7 @@ export const AddTransactionScreen = () => {
                                 <TextInput
                                     label={i18n.t('amount')}
                                     value={value?.toString()}
-                                    onChangeText={onChange}
+                                    onChangeText={(text) => onChange(formatAmountInput(text))}
                                     keyboardType="decimal-pad"
                                     mode="outlined"
                                     style={styles.input}

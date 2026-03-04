@@ -114,7 +114,7 @@ export const SettingsScreen = () => {
                                 ));
                                 showToast(i18n.t('backupSuccess'), 'success');
                             } catch (error: any) {
-                                showToast(error.message || 'Yedek oluşturma hatası', 'error');
+                                showToast(error.message || i18n.t('backupError'), 'error');
                             }
                         }}
                         icon="database-export"
@@ -162,7 +162,7 @@ export const SettingsScreen = () => {
                                                         showToast(i18n.t('restoreSuccess'), 'success');
                                                     } catch (dbError: any) {
                                                         console.error("Database Restore Error:", dbError);
-                                                        showToast('Veri yüklenirken hata: ' + (dbError.message || dbError), 'error');
+                                                        showToast(i18n.t('dataLoadError') + ': ' + (dbError.message || dbError), 'error');
                                                     }
                                                 }
                                             }
@@ -171,7 +171,7 @@ export const SettingsScreen = () => {
                                 }
                             } catch (error: any) {
                                 console.error("Import Flow Error:", error);
-                                Alert.alert("Hata", error.message || 'Geri yükleme başarısız.');
+                                Alert.alert(i18n.t('error'), error.message || i18n.t('restoreFailed'));
                             }
                         }}
                         icon="database-import"

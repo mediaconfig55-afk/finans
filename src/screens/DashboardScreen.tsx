@@ -11,6 +11,7 @@ import { PremiumBalanceCard } from '../components/PremiumBalanceCard';
 import { GlassyCard } from '../components/GlassyCard';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
+import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { scheduleReminderNotification } from '../utils/notifications';
 import i18n from '../i18n';
 import { RootStackParamList } from '../navigation';
@@ -300,7 +301,7 @@ export const DashboardScreen = () => {
                         <TextInput
                             label={i18n.t('amount', { defaultValue: 'Tutar (₺)' })}
                             value={reminderAmount}
-                            onChangeText={setReminderAmount}
+                            onChangeText={(text) => setReminderAmount(formatAmountInput(text))}
                             mode="outlined"
                             keyboardType="numeric"
                             style={{ marginBottom: 16 }}

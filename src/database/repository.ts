@@ -5,13 +5,14 @@ export const Repository = {
     async addTransaction(transaction: Omit<Transaction, 'id'>) {
         const db = await getDB();
         await db.runAsync(
-            'INSERT INTO transactions (type, amount, category, date, description, installmentId) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO transactions (type, amount, category, date, description, tags, installmentId) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [
                 transaction.type,
                 transaction.amount,
                 transaction.category,
                 transaction.date,
                 transaction.description ?? null,
+                transaction.tags ?? null,
                 transaction.installmentId ?? null,
             ]
         );
@@ -30,13 +31,14 @@ export const Repository = {
     async updateTransaction(transaction: Transaction) {
         const db = await getDB();
         await db.runAsync(
-            'UPDATE transactions SET type = ?, amount = ?, category = ?, date = ?, description = ? WHERE id = ?',
+            'UPDATE transactions SET type = ?, amount = ?, category = ?, date = ?, description = ?, tags = ? WHERE id = ?',
             [
                 transaction.type,
                 transaction.amount,
                 transaction.category,
                 transaction.date,
                 transaction.description ?? null,
+                transaction.tags ?? null,
                 transaction.id
             ]
         );
@@ -185,6 +187,21 @@ export const Repository = {
     async deleteReminder(id: number) {
         const db = await getDB();
         await db.runAsync('DELETE FROM reminders WHERE id = ?', [id]);
+    },
+
+    async updateReminder(reminder: Reminder) {
+        const db = await getDB();
+        await db.runAsync(
+            'UPDATE reminders SET title = ?, amount = ?, dayOfMonth = ?, type = ? WHERE id = ?',
+            [reminder.title, reminder.amount, reminder.dayOfMonth, reminder.type, reminder.id]
+        );
+    },
+
+    async deleteInstallment(id: number) {
+        const db = await getDB();
+        // First remove related transactions
+        await db.runAsync('DELETE FROM transactions WHERE installmentId = ?', [id]);
+        await db.runAsync('DELETE FROM installments WHERE id = ?', [id]);
     },
 
     // Bulk operations for backup/restore

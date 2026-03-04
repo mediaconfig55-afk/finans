@@ -8,12 +8,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
+import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
+import { suggestTags, tagsToString, stringToTags } from '../utils/autoTags';
 import { Transaction } from '../types';
 import i18n from '../i18n';
 import { useToast } from '../context/ToastContext';
 
 const schema = z.object({
-    amount: z.string().min(1, i18n.t('amountRequired')).transform((val) => parseFloat(val.replace(',', '.'))).refine((val) => !isNaN(val) && val > 0, i18n.t('validAmountRequired')),
+    amount: z.string().min(1, i18n.t('amountRequired')).refine((val) => { const n = parseFormattedAmount(val); return !isNaN(n) && n > 0; }, i18n.t('validAmountRequired')),
     description: z.string().optional(),
     category: z.string().min(1, i18n.t('categoryRequired')),
 });
@@ -65,10 +67,11 @@ export const TransactionDetailScreen = () => {
             await updateTransaction({
                 ...transaction,
                 type,
-                amount: parseFloat(data.amount), // Ensure amount is number if not already processed by zod
+                amount: parseFormattedAmount(data.amount),
                 category: data.category,
                 date: date.toISOString().split('T')[0],
                 description: data.description,
+                tags: tagsToString(suggestTags(data.description, data.category, type)),
             });
             showToast(i18n.t('transactionUpdated'), 'success');
             setIsEditing(false);
@@ -109,6 +112,16 @@ export const TransactionDetailScreen = () => {
                     <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}>{formatShortDate(transaction.date)}</Text>
 
                     <Text variant="bodyLarge">{transaction.description || i18n.t('noDescription')}</Text>
+
+                    {transaction.tags ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 6 }}>
+                            {stringToTags(transaction.tags).map((tag, idx) => (
+                                <View key={idx} style={{ backgroundColor: theme.colors.primaryContainer, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                                    <Text variant="labelSmall" style={{ color: theme.colors.primary }}>#{tag}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    ) : null}
                 </View>
 
                 <Button mode="contained-tonal" icon="delete" onPress={handleDelete} style={{ marginTop: 24 }} textColor={theme.colors.error}>
@@ -140,7 +153,7 @@ export const TransactionDetailScreen = () => {
                             <TextInput
                                 label={i18n.t('amount')}
                                 value={value?.toString()}
-                                onChangeText={onChange}
+                                onChangeText={(text) => onChange(formatAmountInput(text))}
                                 keyboardType="decimal-pad"
                                 mode="outlined"
                                 style={styles.input}

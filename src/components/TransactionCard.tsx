@@ -4,6 +4,7 @@ import { Text, useTheme, Surface, Icon } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { GlassyCard } from './GlassyCard';
 import { formatCurrency, formatShortDate } from '../utils/format';
+import { stringToTags } from '../utils/autoTags';
 import i18n from '../i18n';
 import { Transaction } from '../types';
 
@@ -77,13 +78,23 @@ export const TransactionCard = ({ item, onPress, renderRightActions, renderLeftA
                         </View>
 
                         <View style={styles.bottomRow}>
-                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
+                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, flex: 1 }} numberOfLines={1}>
                                 {item.description || i18n.t('noDescription')}
                             </Text>
                             <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
                                 {formatShortDate(item.date)}
                             </Text>
                         </View>
+
+                        {item.tags ? (
+                            <View style={styles.tagsRow}>
+                                {stringToTags(item.tags).slice(0, 3).map((tag: string, idx: number) => (
+                                    <View key={idx} style={[styles.tagChip, { backgroundColor: color + '15' }]}>
+                                        <Text style={[styles.tagText, { color: color }]}>#{tag}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        ) : null}
                     </View>
                 </TouchableOpacity>
             </GlassyCard>
@@ -133,5 +144,20 @@ const styles = StyleSheet.create({
     },
     amount: {
         fontWeight: 'bold',
+    },
+    tagsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 4,
+        gap: 4,
+    },
+    tagChip: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 8,
+    },
+    tagText: {
+        fontSize: 10,
+        fontWeight: '600',
     },
 });

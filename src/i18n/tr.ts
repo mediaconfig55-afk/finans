@@ -191,4 +191,67 @@ export default {
     // Validation
     invalidDay: 'Gün 1-31 arasında olmalıdır',
     setReminder: 'Hatırlatıcı Kur',
+
+    // Onboarding
+    onboardingTitle1: 'Finansal Özgürlüğünüze\nHoş Geldiniz',
+    onboardingDesc1: 'Gelir, gider ve borçlarınızı kolayca takip edin',
+    onboardingTitle2: 'Harcamalarınızı\nAnaliz Edin',
+    onboardingDesc2: 'Grafikler ve raporlar ile finansal durumunuzu görün',
+    onboardingTitle3: 'Ödemelerinizi\nKaçırmayın',
+    onboardingDesc3: 'Fatura hatırlatıcıları ile zamanında ödeyin',
+    skip: 'Atla',
+    next: 'İleri',
+    start: 'Başla',
+    permissionRequired: 'Bildirim İzni Gerekli ⚠️',
+    permissionDesc: 'Uygulamanın düzgün çalışabilmesi ve fatura hatırlatıcılarını zamanında alabilmeniz için bildirim izni vermeniz zorunludur.',
+    grantPermission: 'İzin Ver',
+    permissionDeniedTitle: 'İzin Gerekli',
+    permissionDeniedMessage: 'Bildirim izni vermeden devam edemezsiniz. Lütfen ayarlardan izin verin.',
+    goToSettings: 'Ayarlara Git',
+    tryAgain: 'Tekrar Dene',
+    thankYou: 'Teşekkürler! 🎉',
+    letsKnowYou: 'Sizi Tanıyalım',
+    yourName: 'Adınız',
+    enterYourName: 'Adınızı girin',
+    welcomeUser: 'Hoş geldin, %{name}! 👋',
+    genericError: 'Bir sorun oluştu. Lütfen tekrar deneyin.',
+
+    // ErrorBoundary
+    errorOccurred: 'Bir Hata Oluştu',
+    errorMessage: 'Üzgünüz, beklenmeyen bir hata oluştu. Lütfen uygulamayı yeniden başlatın.',
+    retry: 'Tekrar Dene',
+
+    // Stats
+    totalShort: 'Top.',
+
+    // Backup errors
+    backupError: 'Yedek oluşturma hatası',
+    dataLoadError: 'Veri yüklenirken hata',
+    restoreFailed: 'Geri yükleme başarısız.',
+
+    // Quick Reminder (Dashboard)
+    quickReminder: 'Fatura Hatırlatıcı Ekle',
+    quickReminderDesc: 'Son ödeme tarihi için alarm kur',
+    billName: 'Fatura Adı',
+    alarmTime: 'Alarm Saati',
+    titleRequired: 'Başlık gerekli',
+    reminderSaved: 'Hatırlatıcı kaydedildi! 🔔',
+
+    // Notifications toggle
+    notificationsEnabled: 'Bildirimler açıldı',
+    notificationPermissionDenied: 'Bildirim izni reddedildi',
+    notificationsDisabled: 'Bildirimler kapatıldı',
+    receivables: 'Alacaklar',
+
+    // Daily Notifications
+    dailyMorningTitle: 'Günaydın! ☀️',
+    dailyMorningBody: 'Bugün harcamalarına dikkat et! Bütçeni kontrol altında tut. 💰',
+    dailyNoonTitle: 'Öğle Hatırlatması 📊',
+    dailyNoonBody: 'Bugünkü harcamalarını kontrol etmeyi unutma! Uygulamayı aç ve durumunu gör.',
+    dailyEveningTitle: 'Günlük Özet 🎯',
+    dailyEveningBody: 'Bugünkü harcamalarını gözden geçir ve yarın için plan yap! 📈',
+
+    // Tags
+    tags: 'Etiketler',
+    noTags: 'Etiket yok',
 };

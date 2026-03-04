@@ -10,7 +10,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { AppLightTheme, AppDarkTheme } from './src/theme';
 import { initDatabase } from './src/database/db';
 import Navigation from './src/navigation';
-import { registerForPushNotificationsAsync } from './src/utils/notifications';
+import { registerForPushNotificationsAsync, scheduleDailyNotifications } from './src/utils/notifications';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { useStore } from './src/store';
 import { OnboardingScreen } from './src/screens';
@@ -38,6 +38,12 @@ export default function App() {
           await NavigationBar.setBackgroundColorAsync('transparent');
         }
 
+        // Load saved theme
+        const savedTheme = await AsyncStorage.getItem('appTheme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+          useStore.getState().setTheme(savedTheme);
+        }
+
         // Check if onboarding is completed
         const [onboardingComplete, userName] = await Promise.all([
           AsyncStorage.getItem('onboardingComplete'),
@@ -50,6 +56,8 @@ export default function App() {
             setUserName(userName);
           }
           setShowOnboarding(false);
+          // Günlük bildirimleri planla (onboarding tamamlanmışsa)
+          scheduleDailyNotifications().catch(console.error);
         } else {
           setShowOnboarding(true);
         }
@@ -89,11 +97,13 @@ export default function App() {
   // Show Intro Animation after Splash Screen hides
   if (showIntro) {
     return (
-      <SafeAreaProvider onLayout={onLayoutRootView}>
-        <PaperProvider theme={theme}>
-          <IntroAnimation onFinish={handleIntroFinish} />
-        </PaperProvider>
-      </SafeAreaProvider>
+      <ErrorBoundary>
+        <SafeAreaProvider onLayout={onLayoutRootView}>
+          <PaperProvider theme={theme}>
+            <IntroAnimation onFinish={handleIntroFinish} />
+          </PaperProvider>
+        </SafeAreaProvider>
+      </ErrorBoundary>
     );
   }
 

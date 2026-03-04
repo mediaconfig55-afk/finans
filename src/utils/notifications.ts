@@ -107,3 +107,73 @@ export async function cancelReminderNotifications(reminderId: number) {
         }
     }
 }
+
+/**
+ * Günlük 3 bildirim planla:
+ * - 08:00 → Sabah motivasyon
+ * - 13:00 → Öğle harcama uyarısı
+ * - 20:00 → Akşam özet
+ */
+export async function scheduleDailyNotifications() {
+    // Önce mevcut günlük bildirimleri iptal et
+    await cancelDailyNotifications();
+
+    const dailyNotifications = [
+        {
+            id: 'daily_morning',
+            hour: 8,
+            minute: 0,
+            title: i18n.t('dailyMorningTitle', { defaultValue: 'Günaydın! ☀️' }),
+            body: i18n.t('dailyMorningBody', { defaultValue: 'Bugün harcamalarına dikkat et! Bütçeni kontrol altında tut. 💰' }),
+        },
+        {
+            id: 'daily_noon',
+            hour: 13,
+            minute: 0,
+            title: i18n.t('dailyNoonTitle', { defaultValue: 'Öğle Hatırlatması 📊' }),
+            body: i18n.t('dailyNoonBody', { defaultValue: 'Bugünkü harcamalarını kontrol etmeyi unutma! Uygulamayı aç ve durumunu gör.' }),
+        },
+        {
+            id: 'daily_evening',
+            hour: 20,
+            minute: 0,
+            title: i18n.t('dailyEveningTitle', { defaultValue: 'Günlük Özet 🎯' }),
+            body: i18n.t('dailyEveningBody', { defaultValue: 'Bugünkü harcamalarını gözden geçir ve yarın için plan yap! 📈' }),
+        },
+    ];
+
+    for (const notif of dailyNotifications) {
+        try {
+            await Notifications.scheduleNotificationAsync({
+                identifier: notif.id,
+                content: {
+                    title: notif.title,
+                    body: notif.body,
+                    sound: true,
+                    data: { type: 'daily_reminder' },
+                },
+                trigger: {
+                    type: 'daily',
+                    hour: notif.hour,
+                    minute: notif.minute,
+                } as any,
+            });
+        } catch (error) {
+            console.error(`Error scheduling ${notif.id}:`, error);
+        }
+    }
+}
+
+/**
+ * Günlük bildirimleri iptal et
+ */
+export async function cancelDailyNotifications() {
+    const ids = ['daily_morning', 'daily_noon', 'daily_evening'];
+    for (const id of ids) {
+        try {
+            await Notifications.cancelScheduledNotificationAsync(id);
+        } catch (e) {
+            // Ignore if doesn't exist
+        }
+    }
+}

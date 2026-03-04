@@ -8,6 +8,9 @@ const mockDB = {
     getFirstAsync: async () => null,
     execAsync: async () => { },
     eachAsync: async () => { },
+    withTransactionAsync: async (callback: () => Promise<void>) => {
+        await callback();
+    },
 };
 
 export const getDB = async () => {

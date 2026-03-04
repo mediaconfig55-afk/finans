@@ -4,6 +4,7 @@ import { Text, useTheme, FAB, IconButton, Icon, Surface, SegmentedButtons } from
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
+import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { Debt } from '../types';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -182,7 +183,7 @@ export const DebtsScreen = () => {
                         <TextInput
                             label={i18n.t('paymentAmount')}
                             value={paymentAmount}
-                            onChangeText={setPaymentAmount}
+                            onChangeText={(text) => setPaymentAmount(formatAmountInput(text))}
                             keyboardType="decimal-pad"
                             mode="outlined"
                         />

@@ -10,6 +10,7 @@ import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import i18n from '../i18n';
+import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { useToast } from '../context/ToastContext';
 
 const schema = z.object({
@@ -110,7 +111,7 @@ export const AddDebtScreen = () => {
                                 <TextInput
                                     label={i18n.t('amount')}
                                     value={value?.toString()}
-                                    onChangeText={onChange}
+                                    onChangeText={(text) => onChange(formatAmountInput(text))}
                                     keyboardType="decimal-pad"
                                     mode="outlined"
                                     style={styles.input}

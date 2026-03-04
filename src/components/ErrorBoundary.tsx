@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
+import i18n from '../i18n';
 
 interface Props {
     children: ReactNode;
@@ -34,10 +35,10 @@ export class ErrorBoundary extends Component<Props, State> {
             return (
                 <View style={styles.container}>
                     <Text variant="headlineMedium" style={styles.title}>
-                        Bir Hata Oluştu
+                        {i18n.t('errorOccurred')}
                     </Text>
                     <Text variant="bodyMedium" style={styles.message}>
-                        Üzgünüz, beklenmeyen bir hata oluştu. Lütfen uygulamayı yeniden başlatın.
+                        {i18n.t('errorMessage')}
                     </Text>
                     {__DEV__ && this.state.error && (
                         <Text variant="bodySmall" style={styles.error}>
@@ -45,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
                         </Text>
                     )}
                     <Button mode="contained" onPress={this.handleReset} style={styles.button}>
-                        Tekrar Dene
+                        {i18n.t('retry')}
                     </Button>
                 </View>
             );

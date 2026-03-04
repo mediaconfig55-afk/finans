@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Repository } from '../database/repository';
 import { Transaction, Installment, Debt, Reminder } from '../types';
+import i18n from '../i18n';
 
 interface AppState {
     transactions: Transaction[];
@@ -40,6 +42,9 @@ interface AppState {
     fetchReminders: () => Promise<void>;
     addReminder: (r: Omit<Reminder, 'id'>) => Promise<number>;
     deleteReminder: (id: number) => Promise<void>;
+    updateReminder: (reminder: Reminder) => Promise<void>;
+
+    deleteInstallment: (id: number) => Promise<void>;
 
     setTheme: (theme: 'light' | 'dark') => void;
     refreshDashboard: () => Promise<void>;
@@ -83,7 +88,7 @@ export const useStore = create<AppState>((set, get) => ({
             const kpi = { ...kpiData, totalDebt };
             set({ transactions, kpi, dailySpending, reminders, loading: false });
         } catch (e: any) {
-            set({ error: e.message || 'Dashboard yenilenirken hata oluştu', loading: false });
+            set({ error: e.message || i18n.t('error'), loading: false });
             console.error(e);
         }
     },
@@ -103,7 +108,7 @@ export const useStore = create<AppState>((set, get) => ({
             await Repository.addTransaction(t);
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'İşlem eklenirken hata: ' + e.message });
+            set({ error: i18n.t('saveError') + ': ' + e.message });
         }
     },
 
@@ -112,7 +117,7 @@ export const useStore = create<AppState>((set, get) => ({
             await Repository.deleteTransaction(id);
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Silme işlemi başarısız: ' + e.message });
+            set({ error: i18n.t('error') + ': ' + e.message });
         }
     },
 
@@ -130,7 +135,7 @@ export const useStore = create<AppState>((set, get) => ({
             await Repository.addInstallment(i);
             await get().fetchInstallments();
         } catch (e: any) {
-            set({ error: 'Taksit eklenemedi: ' + e.message });
+            set({ error: i18n.t('error') + ': ' + e.message });
         }
     },
 
@@ -149,7 +154,7 @@ export const useStore = create<AppState>((set, get) => ({
             await get().fetchDebts();
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Borç eklenemedi: ' + e.message });
+            set({ error: i18n.t('debtAddError') + ': ' + e.message });
         }
     },
 
@@ -159,7 +164,7 @@ export const useStore = create<AppState>((set, get) => ({
             await get().fetchDebts();
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Durum güncellenemedi.' });
+            set({ error: i18n.t('updateError') });
         }
     },
 
@@ -169,7 +174,7 @@ export const useStore = create<AppState>((set, get) => ({
             await get().fetchDebts();
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Borç silinemedi.' });
+            set({ error: i18n.t('error') });
         }
     },
 
@@ -179,7 +184,7 @@ export const useStore = create<AppState>((set, get) => ({
             await get().fetchDebts();
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Güncelleme başarısız.' });
+            set({ error: i18n.t('updateError') });
         }
     },
 
@@ -188,7 +193,7 @@ export const useStore = create<AppState>((set, get) => ({
             await Repository.updateTransaction(t);
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Güncelleme başarısız.' });
+            set({ error: i18n.t('updateError') });
         }
     },
 
@@ -208,7 +213,7 @@ export const useStore = create<AppState>((set, get) => ({
             await get().refreshDashboard();
             return id;
         } catch (e: any) {
-            set({ error: 'Hatırlatıcı eklenemedi.' });
+            set({ error: i18n.t('reminderAddError') });
             throw e;
         }
     },
@@ -219,11 +224,34 @@ export const useStore = create<AppState>((set, get) => ({
             await get().fetchReminders();
             await get().refreshDashboard();
         } catch (e: any) {
-            set({ error: 'Silinemedi.' });
+            set({ error: i18n.t('error') });
         }
     },
 
-    setTheme: (theme) => set({ theme }),
+    updateReminder: async (reminder) => {
+        try {
+            await Repository.updateReminder(reminder);
+            await get().fetchReminders();
+            await get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: i18n.t('updateError') });
+        }
+    },
+
+    deleteInstallment: async (id) => {
+        try {
+            await Repository.deleteInstallment(id);
+            await get().fetchInstallments();
+            await get().refreshDashboard();
+        } catch (e: any) {
+            set({ error: i18n.t('error') });
+        }
+    },
+
+    setTheme: (theme) => {
+        set({ theme });
+        AsyncStorage.setItem('appTheme', theme).catch(console.error);
+    },
 
     setUserName: (name) => set({ userName: name }),
 

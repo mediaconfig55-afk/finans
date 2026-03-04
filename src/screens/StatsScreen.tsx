@@ -134,7 +134,7 @@ export const StatsScreen = () => {
                                                 {formatCurrency(totalAmount)}
                                             </Text>
                                             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                                Top. {filterType === 'expense' ? i18n.t('expense') : i18n.t('income')}
+                                                {i18n.t('totalShort')} {filterType === 'expense' ? i18n.t('expense') : i18n.t('income')}
                                             </Text>
                                         </View>
                                     );

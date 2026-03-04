@@ -8,6 +8,7 @@ export interface Transaction {
   category: string;
   date: string; // ISO 8601 format: YYYY-MM-DD
   description?: string;
+  tags?: string; // Virgülle ayrılmış etiketler: "araba,yakıt,benzin"
   installmentId?: number;
 }
 

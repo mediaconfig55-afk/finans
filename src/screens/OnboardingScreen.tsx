@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
 import { useStore } from '../store';
+import i18n from '../i18n';
 
 const { width } = Dimensions.get('window');
 
@@ -16,25 +17,25 @@ interface Slide {
     animation: any;
 }
 
-const slides: Slide[] = [
+const getSlides = (): Slide[] => [
     {
         id: 1,
-        title: "Finansal Özgürlüğünüze\nHoş Geldiniz",
-        description: "Gelir, gider ve borçlarınızı kolayca takip edin",
+        title: i18n.t('onboardingTitle1'),
+        description: i18n.t('onboardingDesc1'),
         icon: "wallet",
         animation: "bounceIn"
     },
     {
         id: 2,
-        title: "Harcamalarınızı\nAnaliz Edin",
-        description: "Grafikler ve raporlar ile finansal durumunuzu görün",
+        title: i18n.t('onboardingTitle2'),
+        description: i18n.t('onboardingDesc2'),
         icon: "chart-line",
         animation: "fadeInUp"
     },
     {
         id: 3,
-        title: "Ödemelerinizi\nKaçırmayın",
-        description: "Fatura hatırlatıcıları ile zamanında ödeyin",
+        title: i18n.t('onboardingTitle3'),
+        description: i18n.t('onboardingDesc3'),
         icon: "bell-ring",
         animation: "pulse"
     }
@@ -46,6 +47,7 @@ interface OnboardingScreenProps {
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
     const theme = useTheme();
+    const slides = getSlides();
     const flatListRef = useRef<FlatList>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showPermissionDialog, setShowPermissionDialog] = useState(false);
@@ -83,16 +85,16 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             } else {
                 // İzin verilmedi, uyarı göster
                 Alert.alert(
-                    "İzin Gerekli",
-                    "Bildirim izni vermeden devam edemezsiniz. Lütfen ayarlardan izin verin.",
+                    i18n.t('permissionDeniedTitle'),
+                    i18n.t('permissionDeniedMessage'),
                     [
-                        { text: "Ayarlara Git", onPress: () => Linking.openSettings() },
-                        { text: "Tekrar Dene", onPress: () => handlePermissionGrant() }
+                        { text: i18n.t('goToSettings'), onPress: () => Linking.openSettings() },
+                        { text: i18n.t('tryAgain'), onPress: () => handlePermissionGrant() }
                     ]
                 );
             }
         } catch (error) {
-            Alert.alert("Hata", "Bir sorun oluştu. Lütfen tekrar deneyin.");
+            Alert.alert(i18n.t('error'), i18n.t('genericError'));
         }
     };
 
@@ -141,7 +143,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             {/* Skip Button */}
             {currentIndex < slides.length - 1 && (
                 <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-                    <Text style={{ color: theme.colors.primary }}>Atla</Text>
+                    <Text style={{ color: theme.colors.primary }}>{i18n.t('skip')}</Text>
                 </TouchableOpacity>
             )}
 
@@ -186,7 +188,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
                     style={styles.button}
                     contentStyle={{ paddingVertical: 8 }}
                 >
-                    {currentIndex < slides.length - 1 ? 'İleri' : 'Başla'}
+                    {currentIndex < slides.length - 1 ? i18n.t('next') : i18n.t('start')}
                 </Button>
             </View>
 
@@ -194,14 +196,14 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             <Portal>
                 <Dialog visible={showPermissionDialog} dismissable={false}>
                     <Dialog.Icon icon="bell-ring" size={60} />
-                    <Dialog.Title style={{ textAlign: 'center' }}>Bildirim İzni Gerekli ⚠️</Dialog.Title>
+                    <Dialog.Title style={{ textAlign: 'center' }}>{i18n.t('permissionRequired')}</Dialog.Title>
                     <Dialog.Content>
                         <Text style={{ textAlign: 'center' }}>
-                            Uygulamanın düzgün çalışabilmesi ve fatura hatırlatıcılarını zamanında alabilmeniz için bildirim izni vermeniz <Text style={{ fontWeight: 'bold' }}>zorunludur</Text>.
+                            {i18n.t('permissionDesc')}
                         </Text>
                     </Dialog.Content>
                     <Dialog.Actions>
-                        <Button mode="contained" onPress={handlePermissionGrant}>İzin Ver</Button>
+                        <Button mode="contained" onPress={handlePermissionGrant}>{i18n.t('grantPermission')}</Button>
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
@@ -212,7 +214,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
                     <View style={{ alignItems: 'center', padding: 20 }}>
                         <Icon source="check-circle" size={80} color={theme.colors.primary} />
                         <Text variant="headlineSmall" style={{ marginTop: 16, fontWeight: 'bold' }}>
-                            Teşekkürler! 🎉
+                            {i18n.t('thankYou')}
                         </Text>
                     </View>
                 </Dialog>
@@ -222,15 +224,15 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
             <Portal>
                 <Dialog visible={showNameDialog} dismissable={false}>
                     <Dialog.Icon icon="account" size={60} />
-                    <Dialog.Title style={{ textAlign: 'center' }}>Sizi Tanıyalım</Dialog.Title>
+                    <Dialog.Title style={{ textAlign: 'center' }}>{i18n.t('letsKnowYou')}</Dialog.Title>
                     <Dialog.Content>
                         <TextInput
-                            label="Adınız"
+                            label={i18n.t('yourName')}
                             value={name}
                             onChangeText={setName}
                             mode="outlined"
                             autoFocus
-                            placeholder="Adınızı girin"
+                            placeholder={i18n.t('enterYourName')}
                         />
                     </Dialog.Content>
                     <Dialog.Actions>
@@ -239,7 +241,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
                             onPress={handleStartApp}
                             disabled={name.trim().length < 2}
                         >
-                            Başla
+                            {i18n.t('start')}
                         </Button>
                     </Dialog.Actions>
                 </Dialog>
@@ -251,7 +253,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
                     <View style={{ alignItems: 'center', padding: 20 }}>
                         <Icon source="hand-wave" size={80} color={theme.colors.primary} />
                         <Text variant="headlineSmall" style={{ marginTop: 16, fontWeight: 'bold', textAlign: 'center' }}>
-                            Hoş geldin, {name}! 👋
+                            {i18n.t('welcomeUser', { name })}
                         </Text>
                     </View>
                 </Dialog>

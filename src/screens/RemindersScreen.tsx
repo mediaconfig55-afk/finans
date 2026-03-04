@@ -9,6 +9,7 @@ import { scheduleReminderNotification, cancelReminderNotifications } from '../ut
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import i18n from '../i18n';
+import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { useToast } from '../context/ToastContext';
 
 export const RemindersScreen = () => {
@@ -194,7 +195,7 @@ export const RemindersScreen = () => {
                         <TextInput
                             label={i18n.t('amount')}
                             value={amount}
-                            onChangeText={setAmount}
+                            onChangeText={(text) => setAmount(formatAmountInput(text))}
                             keyboardType="numeric"
                             mode="outlined"
                             style={styles.input}

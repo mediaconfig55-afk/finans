@@ -9,12 +9,34 @@ const getDBPromise = () => {
   return dbPromise;
 };
 
+const DB_VERSION = 3;
+
+async function getMigrationVersion(db: SQLite.SQLiteDatabase): Promise<number> {
+  try {
+    await db.execAsync('CREATE TABLE IF NOT EXISTS db_meta (key TEXT PRIMARY KEY, value TEXT)');
+    const row = await db.getFirstAsync<{ value: string }>(
+      "SELECT value FROM db_meta WHERE key = 'db_version'"
+    );
+    return row ? parseInt(row.value, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function setMigrationVersion(db: SQLite.SQLiteDatabase, version: number) {
+  await db.runAsync(
+    "INSERT OR REPLACE INTO db_meta (key, value) VALUES ('db_version', ?)",
+    [version.toString()]
+  );
+}
+
 export const initDatabase = async () => {
   const db = await getDBPromise();
   try {
-    await db.execAsync(`
-      PRAGMA foreign_keys = ON;
+    await db.execAsync(`PRAGMA foreign_keys = ON;`);
 
+    // === Version 1: Initial schema ===
+    await db.execAsync(`
       CREATE TABLE IF NOT EXISTS installments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         totalAmount REAL NOT NULL,
@@ -55,14 +77,38 @@ export const initDatabase = async () => {
       );
     `);
 
-    // Migration for existing tables
-    try {
-      await db.execAsync('ALTER TABLE debts ADD COLUMN paidAmount REAL DEFAULT 0;');
-    } catch (e) {
-      // Column likely exists
+    // === Versioned Migrations ===
+    const currentVersion = await getMigrationVersion(db);
+
+    if (currentVersion < 1) {
+      // Migration v1: Add paidAmount column to debts (if missing from initial create)
+      try {
+        await db.execAsync('ALTER TABLE debts ADD COLUMN paidAmount REAL DEFAULT 0;');
+      } catch {
+        // Column already exists from CREATE TABLE
+      }
     }
 
-    console.log('Database initialized successfully');
+    if (currentVersion < 2) {
+      // Migration v2: Create db_meta table (already created in getMigrationVersion)
+    }
+
+    if (currentVersion < 3) {
+      // Migration v3: Add tags column to transactions
+      try {
+        await db.execAsync('ALTER TABLE transactions ADD COLUMN tags TEXT;');
+      } catch {
+        // Column already exists
+      }
+    }
+
+    // Add new migrations above this line following the pattern:
+    // if (currentVersion < N) { ... }
+    // Then increment DB_VERSION at the top.
+
+    await setMigrationVersion(db, DB_VERSION);
+
+    console.log(`Database initialized successfully (v${DB_VERSION})`);
   } catch (error) {
     console.error('Error initializing database:', error);
   }
