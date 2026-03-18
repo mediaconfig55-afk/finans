@@ -13,7 +13,7 @@ import i18n from '../i18n';
 import { Portal, Dialog, Button, TextInput, ProgressBar } from 'react-native-paper';
 import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
-import { AdBanner } from '../components/AdBanner';
+
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const DebtsScreen = () => {
@@ -179,7 +179,7 @@ export const DebtsScreen = () => {
                 icon="plus"
                 label={i18n.t('addDebtAction')}
                 style={[styles.fab, {
-                    bottom: (insets.bottom || 20) + 85, // Sit just above tab bar
+                    bottom: (insets.bottom || 20) + 150, // Sit well above banner + tab bar
                     backgroundColor: theme.colors.primary
                 }]}
                 color={theme.colors.onPrimary}
@@ -208,7 +208,6 @@ export const DebtsScreen = () => {
                 </Dialog>
             </Portal>
 
-            <AdBanner />
         </ScreenWrapper>
     );
 };
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 140, // Increased for Floating Tab Bar
+        paddingBottom: 180, // Increased for Banner + Tab Bar + System Nav
     },
     card: {
         marginBottom: 12,

@@ -18,7 +18,7 @@ import i18n from '../i18n';
 import { RootStackParamList } from '../navigation';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { useToast } from '../context/ToastContext';
-import { AdBanner } from '../components/AdBanner';
+
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const DashboardScreen = () => {
@@ -118,7 +118,7 @@ export const DashboardScreen = () => {
             />
 
             <ScrollView
-                contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: 180 }]}
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={refreshDashboard} />
                 }
@@ -293,8 +293,6 @@ export const DashboardScreen = () => {
 
             </ScrollView>
 
-            {/* AdMob Banner at the bottom */}
-            <AdBanner />
 
             {/* Quick Reminder Dialog */}
             <Portal
@@ -405,7 +403,7 @@ export const DashboardScreen = () => {
             />
 
             <TouchableOpacity
-                style={[styles.fabContainer, { bottom: (insets.bottom || 20) + 85 }]}
+                style={[styles.fabContainer, { bottom: (insets.bottom || 20) + 150 }]}
                 onPress={() => navigation.navigate('AddTransaction')}
                 activeOpacity={0.9}
             >
@@ -429,7 +427,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 16,
-        paddingBottom: 140, // Enough space for Floating Tab Bar
+        paddingBottom: 180, // Enough space for Banner + Tab Bar + System Nav
     },
     header: {
         marginBottom: 20,

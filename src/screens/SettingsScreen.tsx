@@ -8,7 +8,7 @@ import i18n from '../i18n';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { useToast } from '../context/ToastContext';
-import { AdBanner } from '../components/AdBanner';
+
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const SettingsScreen = () => {
@@ -225,8 +225,7 @@ export const SettingsScreen = () => {
                 </Text>
             </View>
 
-            {/* AdMob Banner */}
-            <AdBanner />
+
         </View >
     );
 };

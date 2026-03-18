@@ -11,7 +11,7 @@ import { TransactionCard } from '../components/TransactionCard';
 import { groupTransactionsByDate } from '../utils/dateGrouping';
 import { hapticLight, hapticSuccess, hapticError } from '../utils/haptics';
 import i18n from '../i18n';
-import { AdBanner } from '../components/AdBanner';
+
 
 export const TransactionsScreen = () => {
     const theme = useTheme();
@@ -181,7 +181,6 @@ export const TransactionsScreen = () => {
                 }
             />
 
-            <AdBanner />
         </ScreenWrapper>
     );
 };
@@ -212,7 +211,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 140, // Increased for Floating Tab Bar
+        paddingBottom: 180, // Increased for Banner + Tab Bar + System Nav
     },
     emptyContainer: {
         padding: 40,

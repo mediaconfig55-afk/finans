@@ -9,7 +9,7 @@ import { Transaction } from '../types';
 import i18n from '../i18n';
 import { startOfMonth, endOfMonth, format, isSameMonth, addMonths, subMonths } from 'date-fns';
 import { tr } from 'date-fns/locale/tr';
-import { AdBanner } from '../components/AdBanner';
+
 
 interface CategoryData {
     name: string;
@@ -124,7 +124,7 @@ export const StatsScreen = () => {
                     />
 
                     {categoryData.length > 0 ? (
-                        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
+                        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 180 }}>
                             <View style={styles.chartContainer}>
                                 <PieChart
                                     data={pieData}
@@ -176,7 +176,6 @@ export const StatsScreen = () => {
                         </View>
                     )}
 
-                    <AdBanner />
                 </View>
             }
         />

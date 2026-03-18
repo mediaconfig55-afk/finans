@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import i18n from '../i18n';
 import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { useToast } from '../context/ToastContext';
-import { AdBanner } from '../components/AdBanner';
+
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const RemindersScreen = () => {
@@ -180,7 +180,7 @@ export const RemindersScreen = () => {
             <FAB
                 icon="plus"
                 label={i18n.t('newReminder')}
-                style={[styles.fab, { bottom: insets.bottom + 16, backgroundColor: theme.colors.primary }]}
+                style={[styles.fab, { bottom: insets.bottom + 150, backgroundColor: theme.colors.primary }]}
                 color={theme.colors.onPrimary}
                 onPress={showDialog}
             />
@@ -273,7 +273,6 @@ export const RemindersScreen = () => {
                 </Dialog>
             </Portal>
 
-            <AdBanner />
         </ScreenWrapper>
     );
 };
@@ -288,7 +287,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 16,
-        paddingBottom: 100,
+        paddingBottom: 180, // Increased for Banner + Tab Bar + System Nav
     },
     card: {
         marginBottom: 12,

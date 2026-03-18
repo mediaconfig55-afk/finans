@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Platform, View } from 'react-native';
@@ -7,6 +7,7 @@ import { Icon } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import i18n from '../i18n';
 import { useAppTheme } from '../hooks/useAppTheme';
+import { AdBanner } from '../components/AdBanner';
 
 import {
     DashboardScreen,
@@ -34,6 +35,9 @@ export type RootStackParamList = {
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// Export the total height of the bottom bar area (banner + tab bar + spacing)
+// so screens can set their paddingBottom correctly
+export const TAB_BAR_TOTAL_HEIGHT = 140;
 
 import { TouchableOpacity, Text } from 'react-native';
 
@@ -41,6 +45,9 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     const theme = useAppTheme();
     const insets = useSafeAreaInsets();
     const isDark = theme.dark;
+
+    // Account for Android system navigation bar (3-button or gesture nav)
+    const systemNavHeight = Platform.OS === 'android' ? Math.max(insets.bottom, 24) : insets.bottom;
 
     // Gradient colors for the bar background
     const gradientColors = isDark
@@ -50,136 +57,155 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     return (
         <View style={{
             position: 'absolute',
-            bottom: Math.max(insets.bottom, 12),
-            left: 12,
-            right: 12,
-            shadowColor: isDark ? '#7C3AED' : '#6366F1',
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: isDark ? 0.4 : 0.15,
-            shadowRadius: 24,
-            elevation: 12,
+            bottom: 0,
+            left: 0,
+            right: 0,
         }}>
-            <LinearGradient
-                colors={gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                    height: 68,
-                    borderRadius: 22,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-around',
-                    borderWidth: 1.5,
-                    borderColor: isDark ? 'rgba(124, 58, 237, 0.25)' : 'rgba(99, 102, 241, 0.12)',
-                    paddingHorizontal: 8,
-                }}
-            >
-                {state.routes.map((route: any, index: number) => {
-                    const { options } = descriptors[route.key];
-                    const isFocused = state.index === index;
+            {/* AdMob Banner - sits above the tab bar */}
+            <View style={{
+                alignItems: 'center',
+                backgroundColor: isDark ? '#0D1B2A' : '#F0EAFF',
+            }}>
+                <AdBanner />
+            </View>
 
-                    const onPress = () => {
-                        const event = navigation.emit({
-                            type: 'tabPress',
-                            target: route.key,
-                            canPreventDefault: true,
-                        });
+            {/* Tab Bar Container with system nav spacing */}
+            <View style={{
+                paddingBottom: systemNavHeight,
+                paddingHorizontal: 12,
+                paddingTop: 8,
+                backgroundColor: 'transparent',
+            }}>
+                <View style={{
+                    shadowColor: isDark ? '#7C3AED' : '#6366F1',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: isDark ? 0.4 : 0.15,
+                    shadowRadius: 24,
+                    elevation: 12,
+                }}>
+                    <LinearGradient
+                        colors={gradientColors}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={{
+                            height: 64,
+                            borderRadius: 22,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-around',
+                            borderWidth: 1.5,
+                            borderColor: isDark ? 'rgba(124, 58, 237, 0.25)' : 'rgba(99, 102, 241, 0.12)',
+                            paddingHorizontal: 8,
+                        }}
+                    >
+                        {state.routes.map((route: any, index: number) => {
+                            const { options } = descriptors[route.key];
+                            const isFocused = state.index === index;
 
-                        if (!isFocused && !event.defaultPrevented) {
-                            navigation.navigate(route.name);
-                        }
-                    };
+                            const onPress = () => {
+                                const event = navigation.emit({
+                                    type: 'tabPress',
+                                    target: route.key,
+                                    canPreventDefault: true,
+                                });
 
-                    let iconName = "";
-                    let activeColor = "";
-                    let tabLabel = "";
+                                if (!isFocused && !event.defaultPrevented) {
+                                    navigation.navigate(route.name);
+                                }
+                            };
 
-                    switch (route.name) {
-                        case 'DashboardTab':
-                            iconName = isFocused ? "view-dashboard" : "view-dashboard-outline";
-                            activeColor = '#0A84FF';
-                            tabLabel = i18n.t('dashboard', { defaultValue: 'Ana Sayfa' });
-                            break;
-                        case 'TransactionsTab':
-                            iconName = isFocused ? "swap-horizontal-bold" : "swap-horizontal";
-                            activeColor = '#30D158';
-                            tabLabel = i18n.t('transactions', { defaultValue: 'İşlemler' });
-                            break;
-                        case 'StatsTab':
-                            iconName = isFocused ? "finance" : "chart-timeline-variant";
-                            activeColor = '#BF5AF2';
-                            tabLabel = i18n.t('statistics', { defaultValue: 'İstatistik' });
-                            break;
-                        case 'DebtsTab':
-                            iconName = isFocused ? "credit-card-plus" : "credit-card-outline";
-                            activeColor = '#FF453A';
-                            tabLabel = i18n.t('debts', { defaultValue: 'Borçlar' });
-                            break;
-                        default:
-                            iconName = "circle";
-                            activeColor = theme.colors.primary;
-                            tabLabel = '';
-                    }
+                            let iconName = "";
+                            let activeColor = "";
+                            let tabLabel = "";
 
-                    const inactiveColor = isDark ? '#6B7280' : '#94A3B8';
+                            switch (route.name) {
+                                case 'DashboardTab':
+                                    iconName = isFocused ? "view-dashboard" : "view-dashboard-outline";
+                                    activeColor = '#0A84FF';
+                                    tabLabel = i18n.t('dashboard', { defaultValue: 'Ana Sayfa' });
+                                    break;
+                                case 'TransactionsTab':
+                                    iconName = isFocused ? "swap-horizontal-bold" : "swap-horizontal";
+                                    activeColor = '#30D158';
+                                    tabLabel = i18n.t('transactions', { defaultValue: 'İşlemler' });
+                                    break;
+                                case 'StatsTab':
+                                    iconName = isFocused ? "finance" : "chart-timeline-variant";
+                                    activeColor = '#BF5AF2';
+                                    tabLabel = i18n.t('statistics', { defaultValue: 'İstatistik' });
+                                    break;
+                                case 'DebtsTab':
+                                    iconName = isFocused ? "credit-card-plus" : "credit-card-outline";
+                                    activeColor = '#FF453A';
+                                    tabLabel = i18n.t('debts', { defaultValue: 'Borçlar' });
+                                    break;
+                                default:
+                                    iconName = "circle";
+                                    activeColor = theme.colors.primary;
+                                    tabLabel = '';
+                            }
 
-                    return (
-                        <TouchableOpacity
-                            key={index}
-                            accessibilityRole="button"
-                            accessibilityState={isFocused ? { selected: true } : {}}
-                            accessibilityLabel={options.tabBarAccessibilityLabel}
-                            testID={options.tabBarTestID}
-                            onPress={onPress}
-                            activeOpacity={0.7}
-                            style={{
-                                flex: 1,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                height: '100%',
-                            }}
-                        >
-                            {/* Active tab: glowing pill indicator */}
-                            <View style={{
-                                paddingHorizontal: isFocused ? 14 : 0,
-                                paddingVertical: isFocused ? 6 : 0,
-                                borderRadius: 14,
-                                backgroundColor: isFocused ? `${activeColor}20` : 'transparent',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexDirection: 'row',
-                                gap: isFocused ? 6 : 0,
-                                transform: [{ scale: isFocused ? 1.08 : 1 }],
-                            }}>
-                                <Icon
-                                    source={iconName}
-                                    color={isFocused ? activeColor : inactiveColor}
-                                    size={isFocused ? 24 : 22}
-                                />
-                                {isFocused && (
-                                    <Text style={{
-                                        fontSize: 11,
-                                        fontWeight: '700',
-                                        color: activeColor,
-                                        letterSpacing: 0.3,
-                                    }}>{tabLabel}</Text>
-                                )}
-                            </View>
-                            {/* Colored dot below inactive tabs */}
-                            {!isFocused && (
-                                <View style={{
-                                    width: 4,
-                                    height: 4,
-                                    borderRadius: 2,
-                                    backgroundColor: activeColor,
-                                    opacity: 0.4,
-                                    marginTop: 4,
-                                }} />
-                            )}
-                        </TouchableOpacity>
-                    );
-                })}
-            </LinearGradient>
+                            const inactiveColor = isDark ? '#6B7280' : '#94A3B8';
+
+                            return (
+                                <TouchableOpacity
+                                    key={index}
+                                    accessibilityRole="button"
+                                    accessibilityState={isFocused ? { selected: true } : {}}
+                                    accessibilityLabel={options.tabBarAccessibilityLabel}
+                                    testID={options.tabBarTestID}
+                                    onPress={onPress}
+                                    activeOpacity={0.7}
+                                    style={{
+                                        flex: 1,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '100%',
+                                    }}
+                                >
+                                    {/* Active tab: glowing pill indicator */}
+                                    <View style={{
+                                        paddingHorizontal: isFocused ? 14 : 0,
+                                        paddingVertical: isFocused ? 6 : 0,
+                                        borderRadius: 14,
+                                        backgroundColor: isFocused ? `${activeColor}20` : 'transparent',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexDirection: 'row',
+                                        gap: isFocused ? 6 : 0,
+                                        transform: [{ scale: isFocused ? 1.08 : 1 }],
+                                    }}>
+                                        <Icon
+                                            source={iconName}
+                                            color={isFocused ? activeColor : inactiveColor}
+                                            size={isFocused ? 24 : 22}
+                                        />
+                                        {isFocused && (
+                                            <Text style={{
+                                                fontSize: 11,
+                                                fontWeight: '700',
+                                                color: activeColor,
+                                                letterSpacing: 0.3,
+                                            }}>{tabLabel}</Text>
+                                        )}
+                                    </View>
+                                    {/* Colored dot below inactive tabs */}
+                                    {!isFocused && (
+                                        <View style={{
+                                            width: 4,
+                                            height: 4,
+                                            borderRadius: 2,
+                                            backgroundColor: activeColor,
+                                            opacity: 0.4,
+                                            marginTop: 4,
+                                        }} />
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </LinearGradient>
+                </View>
+            </View>
         </View>
     );
 }
