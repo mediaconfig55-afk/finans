@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
+import { View, StyleSheet, Alert, TouchableOpacity, Linking, ScrollView } from 'react-native';
 import { List, Switch, useTheme, Divider, ActivityIndicator, Text, Button } from 'react-native-paper';
+import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 import { useStore } from '../store';
 import { exportToExcel } from '../utils/export';
 import i18n from '../i18n';
@@ -22,6 +23,7 @@ export const SettingsScreen = () => {
     const setTheme = useStore((state) => state.setTheme);
     const [exporting, setExporting] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [showPrivacy, setShowPrivacy] = useState(false);
 
     // Check real notification permission on mount
     React.useEffect(() => {
@@ -215,7 +217,7 @@ export const SettingsScreen = () => {
                 <List.Item
                     title={i18n.t('privacyPolicy')}
                     left={props => <List.Icon {...props} icon="shield-check" />}
-                    onPress={() => import('react-native').then(rn => rn.Linking.openURL('https://mediaconfig55-afk.github.io/Privacy-Policy/'))}
+                    onPress={() => setShowPrivacy(true)}
                 />
             </List.Section>
 
@@ -226,6 +228,8 @@ export const SettingsScreen = () => {
             </View>
 
 
+
+            <PrivacyPolicyModal visible={showPrivacy} onDismiss={() => setShowPrivacy(false)} />
         </View >
     );
 };
