@@ -2,7 +2,7 @@
   "expo": {
     "name": "Finans",
     "slug": "Finans",
-    "version": "1.0.6",
+    "version": "1.0.10",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.bilgin.finans",
-      "versionCode": 11,
+      "versionCode": 21,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -38,6 +38,13 @@
       "@react-native-community/datetimepicker",
       "expo-build-properties",
       [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8461408923340819~8288837210",
+          "iosAppId": "ca-app-pub-8461408923340819~8288837210"
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
@@ -48,9 +55,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "c76e331e-6349-4e7c-911c-dfa3bc93c4d1"
+        "projectId": "f16625ca-1635-4d7c-ae3e-e918a72b3c7b"
       }
     },
-    "owner": "admin_r"
+    "owner": "admins_r"
   }
 }

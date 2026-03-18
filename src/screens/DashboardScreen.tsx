@@ -11,12 +11,15 @@ import { PremiumBalanceCard } from '../components/PremiumBalanceCard';
 import { GlassyCard } from '../components/GlassyCard';
 import { useStore } from '../store';
 import { formatCurrency, formatShortDate } from '../utils/format';
-import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
+import { parseFormattedAmount } from '../utils/formatAmount';
+import { formatAmountInput } from '../utils/formatAmount';
 import { scheduleReminderNotification } from '../utils/notifications';
 import i18n from '../i18n';
 import { RootStackParamList } from '../navigation';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { useToast } from '../context/ToastContext';
+import { AdBanner } from '../components/AdBanner';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const DashboardScreen = () => {
     const theme = useAppTheme();
@@ -24,6 +27,7 @@ export const DashboardScreen = () => {
     const { kpi, transactions, refreshDashboard, loading, dailySpending, reminders, fetchReminders, addReminder, userName } = useStore();
     const insets = useSafeAreaInsets();
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     const totalBalance = kpi.grandTotalIncome - kpi.grandTotalExpense;
     const now = new Date();
@@ -75,7 +79,7 @@ export const DashboardScreen = () => {
             showToast(i18n.t('titleRequired', { defaultValue: 'Başlık gerekli' }), 'error');
             return;
         }
-        const amount = parseFloat(reminderAmount.replace(',', '.'));
+        const amount = parseFormattedAmount(reminderAmount);
         if (isNaN(amount) || amount <= 0) {
             showToast(i18n.t('validAmountRequired', { defaultValue: 'Geçerli bir tutar girin' }), 'error');
             return;
@@ -93,6 +97,7 @@ export const DashboardScreen = () => {
             await fetchReminders();
             setShowReminderDialog(false);
             showToast(i18n.t('reminderSaved', { defaultValue: 'Hatırlatıcı kaydedildi! 🔔' }), 'success');
+            showAdIfReady();
         } catch (e) {
             showToast(i18n.t('genericError', { defaultValue: 'Bir hata oluştu' }), 'error');
         }
@@ -122,21 +127,25 @@ export const DashboardScreen = () => {
                 <View style={styles.header}>
                     <View style={styles.headerContent}>
                         <View style={styles.headerTextContainer}>
-                            <Text variant="headlineSmall" style={styles.brandText}>{i18n.t('welcome')} {userName}</Text>
+                            <Text variant="headlineSmall" style={styles.brandText} children={`${i18n.t('welcome')} ${userName}`} />
                         </View>
                     </View>
-                    <Surface style={{
-                        borderRadius: 20,
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        elevation: 0
-                    }} mode="flat">
-                        <IconButton
-                            icon="cog"
-                            iconColor={theme.colors.onSurface}
-                            size={24}
-                            onPress={() => navigation.navigate('Settings')}
-                        />
-                    </Surface>
+                    <Surface
+                        style={{
+                            borderRadius: 20,
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            elevation: 0
+                        }}
+                        mode="flat"
+                        children={
+                            <IconButton
+                                icon="cog"
+                                iconColor={theme.colors.onSurface}
+                                size={24}
+                                onPress={() => navigation.navigate('Settings')}
+                            />
+                        }
+                    />
                 </View>
 
                 {/* Premium Balance Card */}
@@ -155,60 +164,59 @@ export const DashboardScreen = () => {
                     onPress={handleOpenReminderDialog}
                     style={{ marginBottom: 12 }}
                 >
-                    <Surface style={{
-                        borderRadius: 14,
-                        backgroundColor: theme.colors.surface,
-                        elevation: 2,
-                        overflow: 'hidden',
-                    }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            {/* Left accent bar */}
-                            <LinearGradient
-                                colors={['#FF9500', '#FF453A']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 0, y: 1 }}
-                                style={{
-                                    width: 5,
-                                    height: '100%',
-                                    position: 'absolute',
-                                    left: 0,
-                                    top: 0,
-                                    bottom: 0,
-                                    borderTopLeftRadius: 14,
-                                    borderBottomLeftRadius: 14,
-                                }}
-                            />
-                            <View style={{
-                                flex: 1,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                paddingVertical: 14,
-                                paddingLeft: 18,
-                                paddingRight: 14,
-                            }}>
+                    <Surface
+                        style={{
+                            borderRadius: 14,
+                            backgroundColor: theme.colors.surface,
+                            elevation: 2,
+                            overflow: 'hidden',
+                        }}
+                        children={
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                {/* Left accent bar */}
+                                <LinearGradient
+                                    colors={['#FF9500', '#FF453A']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 0, y: 1 }}
+                                    style={{
+                                        width: 5,
+                                        height: '100%',
+                                        position: 'absolute',
+                                        left: 0,
+                                        top: 0,
+                                        bottom: 0,
+                                        borderTopLeftRadius: 14,
+                                        borderBottomLeftRadius: 14,
+                                    }}
+                                />
                                 <View style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 12,
-                                    backgroundColor: '#FF950018',
+                                    flex: 1,
+                                    flexDirection: 'row',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginRight: 12,
+                                    paddingVertical: 14,
+                                    paddingLeft: 18,
+                                    paddingRight: 14,
                                 }}>
-                                    <Icon source="bell-plus" size={22} color="#FF9500" />
+                                <View style={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 12,
+                                        backgroundColor: '#FF950018',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: 12,
+                                    }}>
+                                        <Icon source="bell-plus" size={22} color="#FF9500" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurface }} children={i18n.t('quickReminder', { defaultValue: 'Fatura Hatırlatıcı Ekle' })} />
+                                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 1 }} children={i18n.t('quickReminderDesc', { defaultValue: 'Son ödeme tarihi için alarm kur' })} />
+                                    </View>
+                                    <Icon source="chevron-right" size={22} color={theme.colors.onSurfaceVariant} />
                                 </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
-                                        {i18n.t('quickReminder', { defaultValue: 'Fatura Hatırlatıcı Ekle' })}
-                                    </Text>
-                                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 1 }}>
-                                        {i18n.t('quickReminderDesc', { defaultValue: 'Son ödeme tarihi için alarm kur' })}
-                                    </Text>
-                                </View>
-                                <Icon source="chevron-right" size={22} color={theme.colors.onSurfaceVariant} />
                             </View>
-                        </View>
-                    </Surface>
+                        }
+                    />
                 </TouchableOpacity>
 
                 {/* Reminders Widget - Glassmorphism */}
@@ -217,29 +225,32 @@ export const DashboardScreen = () => {
                         style={styles.widgetGradient}
                         intensity={0.1}
                         gradientColors={['rgba(101, 31, 255, 0.15)', 'rgba(101, 31, 255, 0.05)']}
-                    >
-                        <View style={styles.widgetHeader}>
-                            <View style={styles.widgetTitleContainer}>
-                                <Icon source="bell-ring" size={24} color={theme.colors.secondary} />
-                                <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{i18n.t('upcomingPayments')}</Text>
-                            </View>
-                            <Button mode="text" textColor={theme.colors.secondary} onPress={() => navigation.navigate('Reminders')}>{i18n.t('viewAll')}</Button>
-                        </View>
+                        children={
+                            <>
+                                <View style={styles.widgetHeader}>
+                                    <View style={styles.widgetTitleContainer}>
+                                        <Icon source="bell-ring" size={24} color={theme.colors.secondary} />
+                                        <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.onSurface }} children={i18n.t('upcomingPayments')} />
+                                    </View>
+                                    <Button mode="text" textColor={theme.colors.secondary} onPress={() => navigation.navigate('Reminders')} children={i18n.t('viewAll')} />
+                                </View>
 
-                        {reminders.slice(0, 2).map((item) => (
-                            <View key={item.id} style={styles.reminderItem}>
-                                <View style={styles.reminderDate}>
-                                    <Text style={styles.reminderDayText}>{item.dayOfMonth}</Text>
-                                    <Text style={styles.reminderLabelText}>{i18n.t('day')}</Text>
-                                </View>
-                                <View style={{ flex: 1, marginLeft: 12 }}>
-                                    <Text variant="bodyLarge" style={{ fontWeight: 'bold', color: theme.colors.onSurface }}>{item.title}</Text>
-                                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{i18n.t('everyMonthDay', { day: item.dayOfMonth })}</Text>
-                                </View>
-                                <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>{formatCurrency(item.amount)}</Text>
-                            </View>
-                        ))}
-                    </GlassyCard>
+                                {reminders.slice(0, 2).map((item) => (
+                                    <View key={`reminder-${item.id}`} style={styles.reminderItem}>
+                                        <View style={styles.reminderDate}>
+                                            <Text style={styles.reminderDayText} children={String(item.dayOfMonth)} />
+                                            <Text style={styles.reminderLabelText} children={i18n.t('day')} />
+                                        </View>
+                                        <View style={{ flex: 1, marginLeft: 12 }}>
+                                            <Text variant="bodyLarge" style={{ fontWeight: 'bold', color: theme.colors.onSurface }} children={item.title} />
+                                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} children={i18n.t('everyMonthDay', { day: item.dayOfMonth })} />
+                                        </View>
+                                        <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }} children={formatCurrency(item.amount)} />
+                                    </View>
+                                ))}
+                            </>
+                        }
+                    />
                 )}
 
                 {/* Daily Spending Widget */}
@@ -254,135 +265,144 @@ export const DashboardScreen = () => {
 
                 {/* Recent Transactions */}
                 <View style={styles.sectionHeader}>
-                    <Text variant="titleLarge">{i18n.t('recentTransactions')}</Text>
+                    <Text variant="titleLarge" children={i18n.t('recentTransactions')} />
                     <Text
                         variant="labelLarge"
                         style={{ color: theme.colors.primary }}
                         onPress={() => navigation.navigate('TransactionsTab')}
-                    >
-                        {i18n.t('seeAll')}
-                    </Text>
+                        children={i18n.t('seeAll')}
+                    />
                 </View>
 
                 {/* List Container */}
                 <View style={styles.listContainer}>
-                    {transactions.slice(0, 5).map((item, index) => (
-                        <React.Fragment key={item.id}>
+                    {transactions.slice(0, 5).map((item) => (
+                        <View key={`transaction-${item.id}`}>
                             <TransactionCard
                                 item={item}
                                 onPress={() => navigation.navigate('TransactionDetail', { transaction: item })}
                             />
-                        </React.Fragment>
+                        </View>
                     ))}
                     {transactions.length === 0 && (
                         <View style={styles.emptyContainer}>
-                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>{i18n.t('noTransactionsYet')}</Text>
+                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }} children={i18n.t('noTransactionsYet')} />
                         </View>
                     )}
                 </View>
 
             </ScrollView>
 
-            {/* Quick Reminder Dialog */}
-            <Portal>
-                <Dialog visible={showReminderDialog} onDismiss={() => setShowReminderDialog(false)} style={{ borderRadius: 16, backgroundColor: theme.colors.surface }}>
-                    <Dialog.Title style={{ color: theme.colors.onSurface }}>
-                        🔔 {i18n.t('quickReminder', { defaultValue: 'Fatura Hatırlatıcı' })}
-                    </Dialog.Title>
-                    <Dialog.Content>
-                        <TextInput
-                            label={i18n.t('billName', { defaultValue: 'Fatura Adı' })}
-                            value={reminderTitle}
-                            onChangeText={setReminderTitle}
-                            mode="outlined"
-                            style={{ marginBottom: 12 }}
-                            placeholder="Elektrik, Su, Doğalgaz..."
-                        />
-                        <TextInput
-                            label={i18n.t('amount', { defaultValue: 'Tutar (₺)' })}
-                            value={reminderAmount}
-                            onChangeText={(text) => setReminderAmount(formatAmountInput(text))}
-                            mode="outlined"
-                            keyboardType="numeric"
-                            style={{ marginBottom: 16 }}
-                        />
-                        {/* Date Picker Button */}
-                        <TouchableOpacity
-                            onPress={() => setShowDatePicker(true)}
-                            style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                backgroundColor: theme.colors.surfaceVariant,
-                                borderRadius: 10,
-                                padding: 12,
-                                marginBottom: 10,
-                            }}
-                        >
-                            <Icon source="calendar" size={22} color={theme.colors.primary} />
-                            <View style={{ flex: 1, marginLeft: 10 }}>
-                                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                    {i18n.t('dueDate', { date: '', defaultValue: 'Son Ödeme Tarihi' })}
-                                </Text>
-                                <Text variant="bodyLarge" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
-                                    {formatDateTR(reminderDate)}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                        {/* Time Picker Button */}
-                        <TouchableOpacity
-                            onPress={() => setShowTimePicker(true)}
-                            style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                backgroundColor: theme.colors.surfaceVariant,
-                                borderRadius: 10,
-                                padding: 12,
-                            }}
-                        >
-                            <Icon source="clock-outline" size={22} color="#FF9500" />
-                            <View style={{ flex: 1, marginLeft: 10 }}>
-                                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                    {i18n.t('alarmTime', { defaultValue: 'Alarm Saati' })}
-                                </Text>
-                                <Text variant="bodyLarge" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
-                                    {formatTimeTR(reminderDate)}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
+            {/* AdMob Banner at the bottom */}
+            <AdBanner />
 
-                        {showDatePicker && (
-                            <DateTimePicker
-                                value={reminderDate}
-                                mode="date"
-                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                onChange={handleDateChange}
-                                minimumDate={new Date()}
-                            />
-                        )}
-                        {showTimePicker && (
-                            <DateTimePicker
-                                value={reminderDate}
-                                mode="time"
-                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                onChange={handleTimeChange}
-                                is24Hour={true}
-                            />
-                        )}
-                    </Dialog.Content>
-                    <Dialog.Actions>
-                        <Button onPress={() => setShowReminderDialog(false)} textColor={theme.colors.onSurfaceVariant}>
-                            {i18n.t('cancel', { defaultValue: 'İptal' })}
-                        </Button>
-                        <Button
-                            mode="contained"
-                            onPress={handleSaveReminder}
-                            style={{ borderRadius: 10, paddingHorizontal: 12 }}
-                        >
-                            {i18n.t('save', { defaultValue: 'Kaydet' })} 🔔
-                        </Button>
-                    </Dialog.Actions>
-                </Dialog>
-            </Portal>
+            {/* Quick Reminder Dialog */}
+            <Portal
+                children={
+                    <Dialog
+                        visible={showReminderDialog}
+                        onDismiss={() => setShowReminderDialog(false)}
+                        style={{ borderRadius: 16, backgroundColor: theme.colors.surface }}
+                        children={
+                            <>
+                                <Dialog.Title
+                                    style={{ color: theme.colors.onSurface }}
+                                    children={`🔔 ${i18n.t('quickReminder', { defaultValue: 'Fatura Hatırlatıcı' })}`}
+                                />
+                                <Dialog.Content
+                                    children={
+                                        <>
+                                            <TextInput
+                                                label={i18n.t('billName', { defaultValue: 'Fatura Adı' })}
+                                                value={reminderTitle}
+                                                onChangeText={setReminderTitle}
+                                                mode="outlined"
+                                                style={{ marginBottom: 12 }}
+                                                placeholder="Elektrik, Su, Doğalgaz..."
+                                            />
+                                            <TextInput
+                                                label={i18n.t('amount', { defaultValue: 'Tutar (₺)' })}
+                                                value={reminderAmount}
+                                                onChangeText={(text) => setReminderAmount(formatAmountInput(text))}
+                                                mode="outlined"
+                                                keyboardType="numeric"
+                                                style={{ marginBottom: 16 }}
+                                            />
+                                            {/* Date Picker Button */}
+                                            <TouchableOpacity
+                                                onPress={() => setShowDatePicker(true)}
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    backgroundColor: theme.colors.surfaceVariant,
+                                                    borderRadius: 10,
+                                                    padding: 12,
+                                                    marginBottom: 10,
+                                                }}
+                                            >
+                                                <Icon source="calendar" size={22} color={theme.colors.primary} />
+                                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                                    <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }} children={i18n.t('dueDate', { date: '', defaultValue: 'Son Ödeme Tarihi' })} />
+                                                    <Text variant="bodyLarge" style={{ fontWeight: '700', color: theme.colors.onSurface }} children={formatDateTR(reminderDate)} />
+                                                </View>
+                                            </TouchableOpacity>
+                                            {/* Time Picker Button */}
+                                            <TouchableOpacity
+                                                onPress={() => setShowTimePicker(true)}
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    backgroundColor: theme.colors.surfaceVariant,
+                                                    borderRadius: 10,
+                                                    padding: 12,
+                                                }}
+                                            >
+                                                <Icon source="clock-outline" size={22} color="#FF9500" />
+                                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                                    <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }} children={i18n.t('alarmTime', { defaultValue: 'Alarm Saati' })} />
+                                                    <Text variant="bodyLarge" style={{ fontWeight: '700', color: theme.colors.onSurface }} children={formatTimeTR(reminderDate)} />
+                                                </View>
+                                            </TouchableOpacity>
+
+                                            {showDatePicker && (
+                                                <DateTimePicker
+                                                    value={reminderDate}
+                                                    mode="date"
+                                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                                    onChange={handleDateChange}
+                                                    minimumDate={new Date()}
+                                                />
+                                            )}
+                                            {showTimePicker && (
+                                                <DateTimePicker
+                                                    value={reminderDate}
+                                                    mode="time"
+                                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                                    onChange={handleTimeChange}
+                                                    is24Hour={true}
+                                                />
+                                            )}
+                                        </>
+                                    }
+                                />
+                                <Dialog.Actions
+                                    children={
+                                        <>
+                                            <Button onPress={() => setShowReminderDialog(false)} textColor={theme.colors.onSurfaceVariant} children={i18n.t('cancel', { defaultValue: 'İptal' })} />
+                                            <Button
+                                                mode="contained"
+                                                onPress={handleSaveReminder}
+                                                style={{ borderRadius: 10, paddingHorizontal: 12 }}
+                                                children={`${i18n.t('save', { defaultValue: 'Kaydet' })} 🔔`}
+                                            />
+                                        </>
+                                    }
+                                />
+                            </>
+                        }
+                    />
+                }
+            />
 
             <TouchableOpacity
                 style={[styles.fabContainer, { bottom: (insets.bottom || 20) + 85 }]}

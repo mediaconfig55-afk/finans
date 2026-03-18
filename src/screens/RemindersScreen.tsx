@@ -11,6 +11,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import i18n from '../i18n';
 import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { useToast } from '../context/ToastContext';
+import { AdBanner } from '../components/AdBanner';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const RemindersScreen = () => {
     const theme = useTheme();
@@ -28,10 +30,11 @@ export const RemindersScreen = () => {
     const [showTimePicker, setShowTimePicker] = useState(false);
 
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     useEffect(() => {
         fetchReminders();
-    }, []);
+    }, [fetchReminders]);
 
     const showDialog = () => setVisible(true);
     const hideDialog = () => {
@@ -78,6 +81,7 @@ export const RemindersScreen = () => {
 
             hideDialog();
             showToast(i18n.t('reminderAdded'), 'success');
+            showAdIfReady();
         } catch (error) {
             console.error('Error adding reminder:', error);
             showToast(i18n.t('reminderAddError'), 'error');
@@ -268,6 +272,8 @@ export const RemindersScreen = () => {
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
+
+            <AdBanner />
         </ScreenWrapper>
     );
 };

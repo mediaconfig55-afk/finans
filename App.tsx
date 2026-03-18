@@ -16,6 +16,7 @@ import { useStore } from './src/store';
 import { OnboardingScreen } from './src/screens';
 import { IntroAnimation } from './src/components/IntroAnimation';
 import { ToastProvider } from './src/context/ToastContext';
+import { initAds } from './src/utils/adInit';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -32,6 +33,7 @@ export default function App() {
     async function prepare() {
       try {
         await initDatabase();
+        await initAds();
 
         if (Platform.OS === 'android') {
           await NavigationBar.setPositionAsync('absolute');

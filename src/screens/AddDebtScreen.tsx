@@ -12,6 +12,7 @@ import { ScreenWrapper } from '../components/ScreenWrapper';
 import i18n from '../i18n';
 import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
 import { useToast } from '../context/ToastContext';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 const schema = z.object({
     personName: z.string().min(1, i18n.t('personNameRequired')),
@@ -35,6 +36,7 @@ export const AddDebtScreen = () => {
 
     // Toast
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -58,6 +60,7 @@ export const AddDebtScreen = () => {
             });
             await fetchDebts();
             showToast(i18n.t('saveSuccess', { type: type === 'debt' ? i18n.t('debt') : i18n.t('receivable') }) + ' ✓', 'success');
+            showAdIfReady();
             setTimeout(() => {
                 navigation.goBack();
             }, 500);

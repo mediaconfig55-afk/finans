@@ -1,4 +1,5 @@
 import { Transaction } from '../types';
+import i18n from '../i18n';
 
 export const groupTransactionsByDate = (transactions: any[]) => {
     const now = new Date();
@@ -11,12 +12,18 @@ export const groupTransactionsByDate = (transactions: any[]) => {
 
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    const todayLabel = i18n.t('dateGroupToday', { defaultValue: 'Bugün' });
+    const yesterdayLabel = i18n.t('dateGroupYesterday', { defaultValue: 'Dün' });
+    const thisWeekLabel = i18n.t('dateGroupThisWeek', { defaultValue: 'Bu Hafta' });
+    const thisMonthLabel = i18n.t('dateGroupThisMonth', { defaultValue: 'Bu Ay' });
+    const olderLabel = i18n.t('dateGroupOlder', { defaultValue: 'Önceki' });
+
     const groups: { [key: string]: Transaction[] } = {
-        'Bugün': [],
-        'Dün': [],
-        'Bu Hafta': [],
-        'Bu Ay': [],
-        'Önceki': []
+        [todayLabel]: [],
+        [yesterdayLabel]: [],
+        [thisWeekLabel]: [],
+        [thisMonthLabel]: [],
+        [olderLabel]: []
     };
 
     transactions.forEach(transaction => {
@@ -28,15 +35,15 @@ export const groupTransactionsByDate = (transactions: any[]) => {
         );
 
         if (transactionDay.getTime() === today.getTime()) {
-            groups['Bugün'].push(transaction);
+            groups[todayLabel].push(transaction);
         } else if (transactionDay.getTime() === yesterday.getTime()) {
-            groups['Dün'].push(transaction);
+            groups[yesterdayLabel].push(transaction);
         } else if (transactionDay >= thisWeekStart && transactionDay < today) {
-            groups['Bu Hafta'].push(transaction);
+            groups[thisWeekLabel].push(transaction);
         } else if (transactionDay >= thisMonthStart && transactionDay < thisWeekStart) {
-            groups['Bu Ay'].push(transaction);
+            groups[thisMonthLabel].push(transaction);
         } else {
-            groups['Önceki'].push(transaction);
+            groups[olderLabel].push(transaction);
         }
     });
 
@@ -45,3 +52,4 @@ export const groupTransactionsByDate = (transactions: any[]) => {
         .filter(([_, transactions]) => transactions.length > 0)
         .map(([title, data]) => ({ title, data }));
 };
+

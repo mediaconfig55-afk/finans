@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Text, useTheme, FAB, IconButton, Icon, Surface, SegmentedButtons } from 'react-native-paper';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useStore } from '../store';
@@ -13,6 +13,8 @@ import i18n from '../i18n';
 import { Portal, Dialog, Button, TextInput, ProgressBar } from 'react-native-paper';
 import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
+import { AdBanner } from '../components/AdBanner';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const DebtsScreen = () => {
     const theme = useTheme();
@@ -25,10 +27,11 @@ export const DebtsScreen = () => {
     const [debtType, setDebtType] = useState<'debt' | 'receivable'>('debt');
 
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     useEffect(() => {
         fetchDebts();
-    }, []);
+    }, [fetchDebts]);
 
     const showPaymentDialog = (debt: Debt) => {
         setSelectedDebt(debt);
@@ -56,6 +59,7 @@ export const DebtsScreen = () => {
         });
 
         showToast(i18n.t('saveSuccess', { type: i18n.t('payment') }) + ' ✓', 'success');
+        showAdIfReady();
         hideDialog();
     };
 
@@ -115,7 +119,16 @@ export const DebtsScreen = () => {
                             <IconButton
                                 icon="delete"
                                 iconColor={theme.colors.error}
-                                onPress={() => deleteDebt(item.id)}
+                                onPress={() => {
+                                    Alert.alert(
+                                        i18n.t('deleteDebtTitle', { defaultValue: 'Borcu Sil' }),
+                                        i18n.t('deleteDebtMessage', { defaultValue: 'Bu kaydı silmek istediğinizden emin misiniz?' }),
+                                        [
+                                            { text: i18n.t('cancel'), style: 'cancel' },
+                                            { text: i18n.t('delete'), style: 'destructive', onPress: () => deleteDebt(item.id) },
+                                        ]
+                                    );
+                                }}
                             />
                         </View>
                     </View>
@@ -194,6 +207,8 @@ export const DebtsScreen = () => {
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
+
+            <AdBanner />
         </ScreenWrapper>
     );
 };

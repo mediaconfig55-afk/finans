@@ -220,8 +220,8 @@ export const Repository = {
         await db.withTransactionAsync(async () => {
             for (const t of transactions) {
                 await db.runAsync(
-                    'INSERT INTO transactions (id, type, amount, category, date, description, installmentId) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [t.id, t.type, t.amount, t.category, t.date, t.description ?? null, t.installmentId ?? null]
+                    'INSERT INTO transactions (id, type, amount, category, date, description, tags, installmentId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [t.id, t.type, t.amount, t.category, t.date, t.description ?? null, t.tags ?? null, t.installmentId ?? null]
                 );
             }
         });

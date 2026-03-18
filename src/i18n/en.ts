@@ -252,4 +252,19 @@ export default {
     // Tags
     tags: 'Tags',
     noTags: 'No tags',
+
+    // Date Grouping
+    dateGroupToday: 'Today',
+    dateGroupYesterday: 'Yesterday',
+    dateGroupThisWeek: 'This Week',
+    dateGroupThisMonth: 'This Month',
+    dateGroupOlder: 'Older',
+
+    // Intro Animation
+    appName: 'MY FINANCE',
+    appTagline: 'Premium Finance Tracker',
+
+    // Debts & Delete
+    deleteDebtTitle: 'Delete Debt',
+    deleteDebtMessage: 'Are you sure you want to delete this record?',
 };

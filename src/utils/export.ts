@@ -141,7 +141,7 @@ export const exportToExcel = async (transactions: Transaction[], debts: Debt[], 
 export const exportBackup = async (transactions: Transaction[], debts: Debt[], reminders: Reminder[], installments: any[]) => {
     try {
         const backupData = {
-            version: '1.0.1', // Bumped version for new format
+            version: '1.0.6',
             exportDate: new Date().toISOString(),
             data: {
                 transactions,

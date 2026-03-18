@@ -110,7 +110,10 @@ export const initDatabase = async () => {
 
     console.log(`Database initialized successfully (v${DB_VERSION})`);
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error('Critical Error initializing database:', error);
+    // Throw the error so the app/UI can catch it and show an ErrorBoundary or alert, 
+    // rather than continuing with a broken database state.
+    throw error;
   }
 };
 

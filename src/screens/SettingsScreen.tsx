@@ -6,8 +6,10 @@ import { useStore } from '../store';
 import { exportToExcel } from '../utils/export';
 import i18n from '../i18n';
 import * as Notifications from 'expo-notifications';
-import { useToast } from '../context/ToastContext';
 import Constants from 'expo-constants';
+import { useToast } from '../context/ToastContext';
+import { AdBanner } from '../components/AdBanner';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 export const SettingsScreen = () => {
     const theme = useTheme();
@@ -29,6 +31,7 @@ export const SettingsScreen = () => {
     }, []);
 
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     const handleExport = async () => {
         setExporting(true);
@@ -52,6 +55,7 @@ export const SettingsScreen = () => {
             );
 
             showToast(i18n.t('exportSuccessMessage'), 'success');
+            showAdIfReady();
         } catch (error: any) {
             showToast(error.message || i18n.t('exportErrorMessage'), 'error');
         } finally {
@@ -113,6 +117,7 @@ export const SettingsScreen = () => {
                                     latestState.installments
                                 ));
                                 showToast(i18n.t('backupSuccess'), 'success');
+                                showAdIfReady();
                             } catch (error: any) {
                                 showToast(error.message || i18n.t('backupError'), 'error');
                             }
@@ -219,6 +224,9 @@ export const SettingsScreen = () => {
                     {i18n.t('footerLove')}
                 </Text>
             </View>
+
+            {/* AdMob Banner */}
+            <AdBanner />
         </View >
     );
 };

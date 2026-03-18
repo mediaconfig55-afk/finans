@@ -2,9 +2,11 @@ import React, { Component, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import i18n from '../i18n';
+import { useAppTheme } from '../hooks/useAppTheme';
 
 interface Props {
     children: ReactNode;
+    theme: ReturnType<typeof useAppTheme>;
 }
 
 interface State {
@@ -12,7 +14,7 @@ interface State {
     error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryInner extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = { hasError: false, error: null };
@@ -31,21 +33,23 @@ export class ErrorBoundary extends Component<Props, State> {
     };
 
     render() {
+        const { theme } = this.props;
+
         if (this.state.hasError) {
             return (
-                <View style={styles.container}>
-                    <Text variant="headlineMedium" style={styles.title}>
+                <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                    <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onBackground }]}>
                         {i18n.t('errorOccurred')}
                     </Text>
-                    <Text variant="bodyMedium" style={styles.message}>
+                    <Text variant="bodyMedium" style={[styles.message, { color: theme.colors.onSurfaceVariant }]}>
                         {i18n.t('errorMessage')}
                     </Text>
                     {__DEV__ && this.state.error && (
-                        <Text variant="bodySmall" style={styles.error}>
+                        <Text variant="bodySmall" style={[styles.error, { color: theme.colors.error }]}>
                             {this.state.error.toString()}
                         </Text>
                     )}
-                    <Button mode="contained" onPress={this.handleReset} style={styles.button}>
+                    <Button mode="contained" onPress={this.handleReset} style={styles.button} buttonColor={theme.colors.primary} textColor={theme.colors.onPrimary}>
                         {i18n.t('retry')}
                     </Button>
                 </View>
@@ -56,26 +60,27 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 }
 
+export const ErrorBoundary = (props: { children: ReactNode }) => {
+    const theme = useAppTheme();
+    return <ErrorBoundaryInner theme={theme}>{props.children}</ErrorBoundaryInner>;
+};
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#0A0E17',
     },
     title: {
         marginBottom: 16,
         fontWeight: 'bold',
-        color: '#FFFFFF',
     },
     message: {
         textAlign: 'center',
         marginBottom: 24,
-        color: '#B0BEC5',
     },
     error: {
-        color: '#FF1744',
         marginBottom: 16,
         textAlign: 'center',
     },

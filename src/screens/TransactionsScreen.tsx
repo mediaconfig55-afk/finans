@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, SectionList, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Text, useTheme, Searchbar, Chip, Icon, Surface } from 'react-native-paper';
+import { Text, useTheme, Searchbar, Icon, Surface, Chip } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useStore } from '../store';
-import { formatCurrency, formatShortDate } from '../utils/format';
+import { formatCurrency } from '../utils/format';
 import { Transaction, Debt } from '../types';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { TransactionCard } from '../components/TransactionCard';
 import { groupTransactionsByDate } from '../utils/dateGrouping';
 import { hapticLight, hapticSuccess, hapticError } from '../utils/haptics';
 import i18n from '../i18n';
+import { AdBanner } from '../components/AdBanner';
 
 export const TransactionsScreen = () => {
     const theme = useTheme();
@@ -22,7 +23,7 @@ export const TransactionsScreen = () => {
     useEffect(() => {
         fetchTransactions();
         fetchDebts();
-    }, []);
+    }, [fetchTransactions, fetchDebts]);
 
     // Borçları da işlem listesine dahil et
     const allItems = [
@@ -179,6 +180,8 @@ export const TransactionsScreen = () => {
                     </View>
                 }
             />
+
+            <AdBanner />
         </ScreenWrapper>
     );
 };

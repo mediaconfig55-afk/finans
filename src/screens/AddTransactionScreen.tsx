@@ -14,6 +14,8 @@ import i18n from '../i18n';
 import { RootStackParamList } from '../navigation';
 import { useToast } from '../context/ToastContext';
 import { useAppTheme } from '../hooks/useAppTheme';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
+import { scheduleReminderNotification } from '../utils/notifications';
 
 const schema = z.object({
     amount: z.string()
@@ -51,6 +53,7 @@ export const AddTransactionScreen = () => {
 
     // Toast
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     const { control, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -172,8 +175,6 @@ export const AddTransactionScreen = () => {
 
                 // REMINDER LOGIC
                 if (isReminder) {
-                    const { useStore } = await import('../store');
-
                     // Add to store first to get the persistent DB ID
                     const reminderId = await useStore.getState().addReminder({
                         title: data.description || i18n.t(data.category),
@@ -183,7 +184,6 @@ export const AddTransactionScreen = () => {
                     });
 
                     // Use the returned DB ID for the notification identifier
-                    const { scheduleReminderNotification } = await import('../utils/notifications');
                     await scheduleReminderNotification(
                         reminderId,
                         data.description || i18n.t(data.category),
@@ -193,6 +193,7 @@ export const AddTransactionScreen = () => {
                 }
             }
             showToast(i18n.t('saveSuccess', { type: i18n.t(type) }) + ' ✓', 'success');
+            showAdIfReady();
             setTimeout(() => {
                 navigation.goBack();
             }, 500);
@@ -239,9 +240,7 @@ export const AddTransactionScreen = () => {
                                     error={!!errors.amount}
                                     left={<TextInput.Icon icon="currency-try" />}
                                 />
-                                <HelperText type="error" visible={!!errors.amount}>
-                                    {errors.amount?.message as string}
-                                </HelperText>
+                                <HelperText type="error" visible={!!errors.amount} children={errors.amount?.message as string} />
                             </>
                         )}
                     />
@@ -252,7 +251,7 @@ export const AddTransactionScreen = () => {
                             name="isInstallment"
                             render={({ field: { onChange, value } }) => (
                                 <View style={styles.switchContainer}>
-                                    <Text variant="bodyLarge">{i18n.t('installment')}</Text>
+                                    <Text variant="bodyLarge" children={i18n.t('installment')} />
                                     <Switch value={value} onValueChange={onChange} color={theme.colors.primary} />
                                 </View>
                             )}
@@ -274,9 +273,7 @@ export const AddTransactionScreen = () => {
                                         style={styles.input}
                                         error={!!errors.installmentCount}
                                     />
-                                    <HelperText type="error" visible={!!errors.installmentCount}>
-                                        {errors.installmentCount?.message as string}
-                                    </HelperText>
+                                    <HelperText type="error" visible={!!errors.installmentCount} children={errors.installmentCount?.message as string} />
                                 </>
                             )}
                         />
@@ -295,14 +292,11 @@ export const AddTransactionScreen = () => {
                                             onPress={() => onChange(cat)}
                                             style={styles.categoryButton}
                                             compact
-                                        >
-                                            {i18n.t(cat)}
-                                        </Button>
+                                            children={i18n.t(cat)}
+                                        />
                                     ))}
                                 </ScrollView>
-                                <HelperText type="error" visible={!!errors.category}>
-                                    {errors.category?.message as string}
-                                </HelperText>
+                                <HelperText type="error" visible={!!errors.category} children={errors.category?.message as string} />
                             </View>
                         )}
                     />
@@ -312,14 +306,13 @@ export const AddTransactionScreen = () => {
                         onPress={() => setShowDatePicker(true)}
                         style={styles.input}
                         icon="calendar"
-                    >
-                        {formatShortDate(date.toISOString())}
-                    </Button>
+                        children={formatShortDate(date.toISOString())}
+                    />
 
                     <View style={styles.switchContainer}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Icon source="alarm" size={24} color={theme.colors.primary} />
-                            <Text variant="bodyLarge" style={{ marginLeft: 8 }}>{i18n.t('setReminder', { defaultValue: 'Hatırlatıcı Kur' })}</Text>
+                            <Text variant="bodyLarge" style={{ marginLeft: 8 }} children={i18n.t('setReminder', { defaultValue: 'Hatırlatıcı Kur' })} />
                         </View>
                         <Switch value={isReminder} onValueChange={setIsReminder} color={theme.colors.primary} />
                     </View>
@@ -330,9 +323,8 @@ export const AddTransactionScreen = () => {
                             onPress={() => setShowReminderPicker(true)}
                             style={styles.input}
                             icon="clock-outline"
-                        >
-                            {reminderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Button>
+                            children={reminderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        />
                     )}
 
                     {showReminderPicker && (
@@ -378,9 +370,8 @@ export const AddTransactionScreen = () => {
                         onPress={handleSubmit(onSubmit)}
                         loading={isSubmitting}
                         style={styles.button}
-                    >
-                        {i18n.t('save')}
-                    </Button>
+                        children={i18n.t('save')}
+                    />
 
                 </ScrollView>
             </KeyboardAvoidingView>

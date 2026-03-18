@@ -22,6 +22,11 @@ interface AppState {
     error: string | null;
     setError: (error: string | null) => void;
 
+    // AdMob Frequency Capping
+    transactionsSinceLastAd: number;
+    incrementTransactionsSinceLastAd: () => void;
+    resetTransactionsSinceLastAd: () => void;
+
     fetchTransactions: () => Promise<void>;
     addTransaction: (t: Omit<Transaction, 'id'>) => Promise<void>;
     deleteTransaction: (id: number) => Promise<void>;
@@ -70,9 +75,13 @@ export const useStore = create<AppState>((set, get) => ({
     theme: 'dark', // Default dark theme
     userName: null,
     hasCompletedOnboarding: false,
-
     error: null,
     setError: (error) => set({ error }),
+
+    // AdMob Counters
+    transactionsSinceLastAd: 0,
+    incrementTransactionsSinceLastAd: () => set((state) => ({ transactionsSinceLastAd: state.transactionsSinceLastAd + 1 })),
+    resetTransactionsSinceLastAd: () => set({ transactionsSinceLastAd: 0 }),
 
     refreshDashboard: async () => {
         if (get().loading) return; // Prevent multiple calls

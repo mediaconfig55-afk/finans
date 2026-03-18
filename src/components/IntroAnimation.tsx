@@ -12,6 +12,7 @@ import Animated, {
     runOnJS,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import i18n from '../i18n';
 
 const { width, height } = Dimensions.get('window');
 
@@ -119,8 +120,8 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({ onFinish }) => {
             </Animated.View>
 
             <Animated.View style={[styles.textContainer, animatedTextStyle]}>
-                <Text style={styles.appName}>FİNANSIM</Text>
-                <Text style={styles.tagline}>Premium Finans Takibi</Text>
+                <Text style={styles.appName}>{i18n.t('appName', { defaultValue: 'FİNANSIM' })}</Text>
+                <Text style={styles.tagline}>{i18n.t('appTagline', { defaultValue: 'Premium Finans Takibi' })}</Text>
             </Animated.View>
         </View>
     );

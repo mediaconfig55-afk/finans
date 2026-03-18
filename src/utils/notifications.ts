@@ -83,10 +83,18 @@ export async function scheduleReminderNotification(reminderId: number, title: st
                     sound: true,
                     data: { reminderId, index: i },
                 },
-                trigger: {
-                    type: 'date',
-                    date: triggerDate
-                } as any,
+                trigger: Platform.OS === 'ios' ? {
+                    type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+                    repeats: false,
+                    year: triggerDate.getFullYear(),
+                    month: triggerDate.getMonth() + 1,
+                    day: triggerDate.getDate(),
+                    hour: triggerDate.getHours(),
+                    minute: triggerDate.getMinutes(),
+                } : {
+                    type: Notifications.SchedulableTriggerInputTypes.DATE,
+                    date: triggerDate,
+                },
             });
         } catch (error) {
             console.error('Error scheduling notification:', error);
@@ -153,10 +161,10 @@ export async function scheduleDailyNotifications() {
                     data: { type: 'daily_reminder' },
                 },
                 trigger: {
-                    type: 'daily',
+                    type: Notifications.SchedulableTriggerInputTypes.DAILY,
                     hour: notif.hour,
                     minute: notif.minute,
-                } as any,
+                },
             });
         } catch (error) {
             console.error(`Error scheduling ${notif.id}:`, error);

@@ -1,6 +1,6 @@
 {
   "name": "finans",
-  "version": "1.0.1",
+  "version": "1.0.6",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -39,6 +39,7 @@
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-gifted-charts": "^1.4.74",
+    "react-native-google-mobile-ads": "^16.2.3",
     "react-native-paper": "^5.15.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",

@@ -7,8 +7,9 @@ import { useStore } from '../store';
 import { formatCurrency } from '../utils/format';
 import { Transaction } from '../types';
 import i18n from '../i18n';
-import { startOfMonth, endOfMonth, format, addMonths, subMonths, isSameMonth } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { startOfMonth, endOfMonth, format, isSameMonth, addMonths, subMonths } from 'date-fns';
+import { tr } from 'date-fns/locale/tr';
+import { AdBanner } from '../components/AdBanner';
 
 interface CategoryData {
     name: string;
@@ -26,7 +27,7 @@ export const StatsScreen = () => {
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
+    }, [fetchTransactions]);
 
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {
@@ -71,113 +72,114 @@ export const StatsScreen = () => {
     const prevMonth = () => setSelectedDate(subMonths(selectedDate, 1));
 
     return (
-        <ScreenWrapper>
-            <View style={styles.header}>
-                <IconButton icon="chevron-left" onPress={prevMonth} />
-                <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>
-                    {format(selectedDate, 'MMMM yyyy', { locale: tr })}
-                </Text>
-                <IconButton icon="chevron-right" onPress={nextMonth} />
-            </View>
-
-            <View style={styles.content}>
-
-                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
-                    <Surface style={[styles.metricCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                            <Icon source="scale-balance" size={20} color={theme.colors.primary} />
-                            <Text variant="labelSmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }}>{i18n.t('income')}/{i18n.t('expense')}</Text>
-                        </View>
-                        <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                            {totalAmount > 0 ? (filterType === 'expense' ? `%${((totalAmount / (transactions.filter(t => isSameMonth(new Date(t.date), selectedDate) && t.type === 'income').reduce((a, c) => a + c.amount, 0) || 1)) * 100).toFixed(0)}` : '-') : '-'}
-                        </Text>
-                        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>{i18n.t('ratio')}</Text>
-                    </Surface>
-
-                    <Surface style={[styles.metricCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                            <Icon source="calendar-clock" size={20} color={theme.colors.secondary} />
-                            <Text variant="labelSmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }}>{i18n.t('dailyAverage')}</Text>
-                        </View>
-                        <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                            {formatCurrency(totalAmount / new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate())}
-                        </Text>
-                        <Text variant="bodySmall" style={{ color: theme.colors.outline }}>{i18n.t('spending')}</Text>
-                    </Surface>
-                </View>
-
-                <SegmentedButtons
-                    value={filterType}
-                    onValueChange={(val: string) => setFilterType(val as 'income' | 'expense')}
-                    buttons={[
-                        { value: 'expense', label: i18n.t('expense'), icon: 'arrow-down' },
-                        { value: 'income', label: i18n.t('income'), icon: 'arrow-up' },
-                    ]}
-                    style={styles.segmentedButton}
-                />
-
-                {categoryData.length > 0 ? (
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
-                        <View style={styles.chartContainer}>
-                            <PieChart
-                                data={pieData}
-                                donut
-                                showGradient
-                                sectionAutoFocus
-                                radius={90}
-                                innerRadius={60}
-                                innerCircleColor={theme.colors.background}
-                                centerLabelComponent={() => {
-                                    return (
-                                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                            <Text variant="titleMedium" style={{ fontSize: 20, fontWeight: 'bold' }}>
-                                                {formatCurrency(totalAmount)}
-                                            </Text>
-                                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                                {i18n.t('totalShort')} {filterType === 'expense' ? i18n.t('expense') : i18n.t('income')}
-                                            </Text>
-                                        </View>
-                                    );
-                                }}
-                            />
-                        </View>
-
-                        <View style={styles.listContainer}>
-                            {categoryData.map((item, index) => (
-                                <Surface key={index} style={[styles.listItem, { backgroundColor: theme.colors.surface }]} elevation={0}>
-                                    <View style={[styles.iconBox, { backgroundColor: item.color + '20' }]}>
-                                        <Icon source={item.icon} size={24} color={item.color} />
-                                    </View>
-                                    <View style={styles.itemContent}>
-                                        <View style={styles.itemRow}>
-                                            <Text variant="titleMedium" style={{ flex: 1, fontWeight: '600' }}>
-                                                {i18n.t(item.name, { defaultValue: item.name })}
-                                            </Text>
-                                            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: item.color }}>
-                                                {formatCurrency(item.amount)}
-                                            </Text>
-                                        </View>
-                                        <View style={styles.progressContainer}>
-                                            <ProgressBar progress={item.percentage / 100} color={item.color} style={styles.progressBar} />
-                                            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8, minWidth: 35 }}>
-                                                %{item.percentage.toFixed(1)}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                </Surface>
-                            ))}
-                        </View>
-                    </ScrollView>
-                ) : (
-                    <View style={styles.emptyState}>
-                        <Icon source="chart-pie" size={64} color={theme.colors.outline} />
-                        <Text style={{ marginTop: 16, color: theme.colors.onSurfaceVariant }}>
-                            {i18n.t('noData')}
-                        </Text>
+        <ScreenWrapper
+            children={
+                <View style={styles.content}>
+                    <View style={styles.header}>
+                        <IconButton icon="chevron-left" onPress={prevMonth} />
+                        <Text variant="titleLarge" style={{ fontWeight: 'bold' }} children={format(selectedDate, 'MMMM yyyy', { locale: tr })} />
+                        <IconButton icon="chevron-right" onPress={nextMonth} />
                     </View>
-                )}
-            </View>
-        </ScreenWrapper>
+
+                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
+                        <Surface
+                            style={[styles.metricCard, { backgroundColor: theme.colors.surface }]}
+                            elevation={1}
+                            children={
+                                <>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                        <Icon source="scale-balance" size={20} color={theme.colors.primary} />
+                                        <Text variant="labelSmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }} children={`${i18n.t('income')}/${i18n.t('expense')}`} />
+                                    </View>
+                                    <Text variant="titleMedium" style={{ fontWeight: 'bold' }} children={totalAmount > 0 ? (filterType === 'expense' ? `%${((totalAmount / (transactions.filter(t => isSameMonth(new Date(t.date), selectedDate) && t.type === 'income').reduce((a, c) => a + c.amount, 0) || 1)) * 100).toFixed(0)}` : '-') : '-'} />
+                                    <Text variant="bodySmall" style={{ color: theme.colors.outline }} children={i18n.t('ratio')} />
+                                </>
+                            }
+                        />
+
+                        <Surface
+                            style={[styles.metricCard, { backgroundColor: theme.colors.surface }]}
+                            elevation={1}
+                            children={
+                                <>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                        <Icon source="calendar-clock" size={20} color={theme.colors.secondary} />
+                                        <Text variant="labelSmall" style={{ marginLeft: 6, color: theme.colors.onSurfaceVariant }} children={i18n.t('dailyAverage')} />
+                                    </View>
+                                    <Text variant="titleMedium" style={{ fontWeight: 'bold' }} children={formatCurrency(totalAmount / new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate())} />
+                                    <Text variant="bodySmall" style={{ color: theme.colors.outline }} children={i18n.t('spending')} />
+                                </>
+                            }
+                        />
+                    </View>
+
+                    <SegmentedButtons
+                        value={filterType}
+                        onValueChange={(val: string) => setFilterType(val as 'income' | 'expense')}
+                        buttons={[
+                            { value: 'expense', label: i18n.t('expense'), icon: 'arrow-down' },
+                            { value: 'income', label: i18n.t('income'), icon: 'arrow-up' },
+                        ]}
+                        style={styles.segmentedButton}
+                    />
+
+                    {categoryData.length > 0 ? (
+                        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
+                            <View style={styles.chartContainer}>
+                                <PieChart
+                                    data={pieData}
+                                    donut
+                                    showGradient
+                                    sectionAutoFocus
+                                    radius={90}
+                                    innerRadius={60}
+                                    innerCircleColor={theme.colors.background}
+                                    centerLabelComponent={() => {
+                                        return (
+                                            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                                <Text variant="titleMedium" style={{ fontSize: 20, fontWeight: 'bold' }} children={formatCurrency(totalAmount)} />
+                                                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} children={`${i18n.t('totalShort')} ${filterType === 'expense' ? i18n.t('expense') : i18n.t('income')}`} />
+                                            </View>
+                                        );
+                                    }}
+                                />
+                            </View>
+
+                            <View style={styles.listContainer}>
+                                {categoryData.map((item, index) => (
+                                    <Surface key={index} style={[styles.listItem, { backgroundColor: theme.colors.surface }]} elevation={0}
+                                        children={
+                                            <>
+                                                <View style={[styles.iconBox, { backgroundColor: item.color + '20' }]}>
+                                                    <Icon source={item.icon} size={24} color={item.color} />
+                                                </View>
+                                                <View style={styles.itemContent}>
+                                                    <View style={styles.itemRow}>
+                                                        <Text variant="titleMedium" style={{ flex: 1, fontWeight: '600' }} children={i18n.t(item.name, { defaultValue: item.name })} />
+                                                        <Text variant="titleMedium" style={{ fontWeight: 'bold', color: item.color }} children={formatCurrency(item.amount)} />
+                                                    </View>
+                                                    <View style={styles.progressContainer}>
+                                                        <ProgressBar progress={item.percentage / 100} color={item.color} style={styles.progressBar} />
+                                                        <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8, minWidth: 35 }} children={`%${item.percentage.toFixed(1)}`} />
+                                                    </View>
+                                                </View>
+                                            </>
+                                        }
+                                    />
+                                ))}
+                            </View>
+                        </ScrollView>
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <Icon source="chart-pie" size={64} color={theme.colors.outline} />
+                            <Text style={{ marginTop: 16, color: theme.colors.onSurfaceVariant }} children={i18n.t('noData')} />
+                        </View>
+                    )}
+
+                    <AdBanner />
+                </View>
+            }
+        />
     );
 };
 

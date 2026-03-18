@@ -254,4 +254,19 @@ export default {
     // Tags
     tags: 'Etiketler',
     noTags: 'Etiket yok',
+
+    // Date Grouping
+    dateGroupToday: 'Bugün',
+    dateGroupYesterday: 'Dün',
+    dateGroupThisWeek: 'Bu Hafta',
+    dateGroupThisMonth: 'Bu Ay',
+    dateGroupOlder: 'Önceki',
+
+    // Intro Animation
+    appName: 'FİNANSIM',
+    appTagline: 'Premium Finans Takibi',
+
+    // Debts & Delete
+    deleteDebtTitle: 'Borcu Sil',
+    deleteDebtMessage: 'Bu kaydı silmek istediğinizden emin misiniz?',
 };

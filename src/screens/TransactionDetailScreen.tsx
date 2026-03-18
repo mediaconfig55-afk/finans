@@ -9,10 +9,11 @@ import { z } from 'zod';
 import { useStore } from '../store';
 import { formatShortDate } from '../utils/format';
 import { formatAmountInput, parseFormattedAmount } from '../utils/formatAmount';
-import { suggestTags, tagsToString, stringToTags } from '../utils/autoTags';
+import { tagsToString, suggestTags, stringToTags } from '../utils/autoTags';
 import { Transaction } from '../types';
 import i18n from '../i18n';
 import { useToast } from '../context/ToastContext';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 const schema = z.object({
     amount: z.string().min(1, i18n.t('amountRequired')).refine((val) => { const n = parseFormattedAmount(val); return !isNaN(n) && n > 0; }, i18n.t('validAmountRequired')),
@@ -24,7 +25,7 @@ type FormData = z.infer<typeof schema>;
 
 const CATEGORIES = {
     income: ['salary', 'extraIncome', 'investment', 'other'] as const,
-    expense: ['market', 'food', 'transport', 'bill', 'entertainment', 'rent', 'health', 'clothing', 'technology', 'other'] as const,
+    expense: ['market', 'food', 'transport', 'bill', 'entertainment', 'rent', 'health', 'clothing', 'technology', 'education', 'other'] as const,
 };
 
 export const TransactionDetailScreen = () => {
@@ -52,7 +53,7 @@ export const TransactionDetailScreen = () => {
         navigation.setOptions({
             headerRight: () => (
                 !isEditing ? (
-                    <Button onPress={() => setIsEditing(true)}>{i18n.t('edit')}</Button>
+                    <Button onPress={() => setIsEditing(true)} children={i18n.t('edit')} />
                 ) : null
             ),
             title: isEditing ? i18n.t('editTransaction') : i18n.t('transactionDetail')
@@ -61,6 +62,7 @@ export const TransactionDetailScreen = () => {
 
     // Toast
     const { showToast } = useToast();
+    const { showAdIfReady } = useInterstitialAd();
 
     const onSubmit = async (data: any) => {
         try {
@@ -75,6 +77,7 @@ export const TransactionDetailScreen = () => {
             });
             showToast(i18n.t('transactionUpdated'), 'success');
             setIsEditing(false);
+            showAdIfReady();
             navigation.goBack();
         } catch (error) {
             console.error(error);
@@ -105,28 +108,24 @@ export const TransactionDetailScreen = () => {
         return (
             <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
                 <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-                    <Text variant="headlineMedium" style={{ color: type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold', marginBottom: 8 }}>
-                        {type === 'income' ? '+' : '-'}{transaction.amount} ₺
-                    </Text>
-                    <Text variant="headlineSmall" style={{ fontWeight: 'bold', marginBottom: 8 }}>{i18n.t(transaction.category)}</Text>
-                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}>{formatShortDate(transaction.date)}</Text>
+                    <Text variant="headlineMedium" style={{ color: type === 'income' ? (theme.colors as any).customIncome : (theme.colors as any).customExpense, fontWeight: 'bold', marginBottom: 8 }} children={`${type === 'income' ? '+' : '-'}${transaction.amount} ₺`} />
+                    <Text variant="headlineSmall" style={{ fontWeight: 'bold', marginBottom: 8 }} children={i18n.t(transaction.category)} />
+                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }} children={formatShortDate(transaction.date)} />
 
-                    <Text variant="bodyLarge">{transaction.description || i18n.t('noDescription')}</Text>
+                    <Text variant="bodyLarge" children={transaction.description || i18n.t('noDescription')} />
 
                     {transaction.tags ? (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 6 }}>
                             {stringToTags(transaction.tags).map((tag, idx) => (
                                 <View key={idx} style={{ backgroundColor: theme.colors.primaryContainer, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                                    <Text variant="labelSmall" style={{ color: theme.colors.primary }}>#{tag}</Text>
+                                    <Text variant="labelSmall" style={{ color: theme.colors.primary }} children={`#${tag}`} />
                                 </View>
                             ))}
                         </View>
                     ) : null}
                 </View>
 
-                <Button mode="contained-tonal" icon="delete" onPress={handleDelete} style={{ marginTop: 24 }} textColor={theme.colors.error}>
-                    {i18n.t('deleteTransaction')}
-                </Button>
+                <Button mode="contained-tonal" icon="delete" onPress={handleDelete} style={{ marginTop: 24 }} textColor={theme.colors.error} children={i18n.t('deleteTransaction')} />
             </ScrollView>
         );
     }
@@ -160,9 +159,7 @@ export const TransactionDetailScreen = () => {
                                 error={!!errors.amount}
                                 left={<TextInput.Icon icon="currency-try" />}
                             />
-                            <HelperText type="error" visible={!!errors.amount}>
-                                {errors.amount?.message as string}
-                            </HelperText>
+                            <HelperText type="error" visible={!!errors.amount} children={errors.amount?.message as string} />
                         </>
                     )}
                 />
@@ -180,14 +177,11 @@ export const TransactionDetailScreen = () => {
                                         onPress={() => onChange(cat)}
                                         style={styles.categoryButton}
                                         compact
-                                    >
-                                        {i18n.t(cat)}
-                                    </Button>
+                                        children={i18n.t(cat)}
+                                    />
                                 ))}
                             </ScrollView>
-                            <HelperText type="error" visible={!!errors.category}>
-                                {errors.category?.message as string}
-                            </HelperText>
+                            <HelperText type="error" visible={!!errors.category} children={errors.category?.message as string} />
                         </View>
                     )}
                 />
